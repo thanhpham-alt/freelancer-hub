@@ -1,44 +1,39 @@
-import { isSupabaseConfigured } from '../supabase';
-import * as firebaseStore from './firebaseStore';
 import * as supabaseStore from './supabaseStore';
 
-const useSupabase = import.meta.env.VITE_DATA_BACKEND === 'supabase' && isSupabaseConfigured;
-const store = useSupabase ? supabaseStore : firebaseStore;
-
 if (import.meta.env.DEV) {
-  console.info(`Freelancer Hub data backend: ${useSupabase ? 'Supabase' : 'Firebase'}`);
+  console.info('Freelancer Hub data backend: Supabase');
 }
 
-export const getFreelancers = store.getFreelancers;
-export const getFreelancerById = store.getFreelancerById;
-export const saveFreelancer = store.saveFreelancer;
-export const saveFreelancers = store.saveFreelancers;
-export const deleteFreelancer = store.deleteFreelancer;
+export const getFreelancers = supabaseStore.getFreelancers;
+export const getFreelancerById = supabaseStore.getFreelancerById;
+export const saveFreelancer = supabaseStore.saveFreelancer;
+export const saveFreelancers = supabaseStore.saveFreelancers;
+export const deleteFreelancer = supabaseStore.deleteFreelancer;
 
-export const getJobs = store.getJobs;
-export const getJobById = store.getJobById;
-export const saveJob = store.saveJob;
-export const deleteJob = store.deleteJob;
-export const getJobsByFreelancer = store.getJobsByFreelancer;
+export const getJobs = supabaseStore.getJobs;
+export const getJobById = supabaseStore.getJobById;
+export const saveJob = supabaseStore.saveJob;
+export const deleteJob = supabaseStore.deleteJob;
+export const getJobsByFreelancer = supabaseStore.getJobsByFreelancer;
 
-export const getContracts = store.getContracts;
-export const getContractById = store.getContractById;
-export const saveContract = store.saveContract;
-export const deleteContract = store.deleteContract;
-export const getContractsByFreelancer = store.getContractsByFreelancer;
+export const getContracts = supabaseStore.getContracts;
+export const getContractById = supabaseStore.getContractById;
+export const saveContract = supabaseStore.saveContract;
+export const deleteContract = supabaseStore.deleteContract;
+export const getContractsByFreelancer = supabaseStore.getContractsByFreelancer;
 
-export const getAcceptanceReports = store.getAcceptanceReports;
-export const getAcceptanceReportById = store.getAcceptanceReportById;
-export const saveAcceptanceReport = store.saveAcceptanceReport;
-export const deleteAcceptanceReport = store.deleteAcceptanceReport;
+export const getAcceptanceReports = supabaseStore.getAcceptanceReports;
+export const getAcceptanceReportById = supabaseStore.getAcceptanceReportById;
+export const saveAcceptanceReport = supabaseStore.saveAcceptanceReport;
+export const deleteAcceptanceReport = supabaseStore.deleteAcceptanceReport;
 
-export const getPaymentSchedules = store.getPaymentSchedules;
-export const getPaymentScheduleById = store.getPaymentScheduleById;
-export const savePaymentSchedule = store.savePaymentSchedule;
-export const deletePaymentSchedule = store.deletePaymentSchedule;
-export const getPaymentSchedulesByContract = store.getPaymentSchedulesByContract;
-export const updatePaymentStatus = store.updatePaymentStatus;
+export const getPaymentSchedules = supabaseStore.getPaymentSchedules;
+export const getPaymentScheduleById = supabaseStore.getPaymentScheduleById;
+export const savePaymentSchedule = supabaseStore.savePaymentSchedule;
+export const deletePaymentSchedule = supabaseStore.deletePaymentSchedule;
+export const getPaymentSchedulesByContract = supabaseStore.getPaymentSchedulesByContract;
+export const updatePaymentStatus = supabaseStore.updatePaymentStatus;
 
-export const getDashboardStats = store.getDashboardStats;
-export const exportAllData = store.exportAllData;
-export const importAllData = store.importAllData;
+export const getDashboardStats = supabaseStore.getDashboardStats;
+export const exportAllData = supabaseStore.exportAllData;
+export const importAllData = supabaseStore.importAllData;

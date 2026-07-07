@@ -131,7 +131,7 @@ export default function Freelancers() {
       await Promise.race([
         saveFreelancers(toImport),
         new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Import mất quá lâu. Vui lòng kiểm tra kết nối Firebase hoặc thử lại sau vài giây.')), 45000);
+          setTimeout(() => reject(new Error('Import mất quá lâu. Vui lòng kiểm tra kết nối Supabase hoặc thử lại sau vài giây.')), 45000);
         })
       ]);
       
