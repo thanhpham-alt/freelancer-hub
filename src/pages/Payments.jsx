@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { getPaymentSchedules, getContracts, getFreelancers, updatePaymentStatus } from '../data/store';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { getPaymentSchedules, getContracts, getFreelancers, updatePaymentStatus, deletePaymentSchedule } from '../data/store';
+import { formatCurrency } from '../utils/formatters';
 import { useToast } from '../components/Toast';
 import { AppIcon, StatusBadge } from '../components';
 import { safeArray } from '../utils/dataGuards';
@@ -28,39 +28,54 @@ export default function Payments() {
     loadData();
   }, []);
 
-  const getContractDetails = (contractId) => {
-    const contract = contracts.find(c => c.id === contractId);
-    if (!contract) return { number: 'Chưa rõ', freelancerName: 'Chưa rõ' };
-    const freelancer = freelancers.find(f => f.id === contract.freelancerId);
+  const contractMap = new Map(safeArray(contracts).map(contract => [contract.id, contract]));
+  const freelancerMap = new Map(safeArray(freelancers).map(freelancer => [freelancer.id, freelancer]));
+
+  const getContractDetails = (contract) => {
+    if (!contract) return null;
+    const freelancer = freelancerMap.get(contract.freelancerId);
     return {
-      number: contract.contractNumber,
-      freelancerName: freelancer ? freelancer.fullName : 'Chưa rõ'
+      number: contract.contractNumber || 'Chưa có số HĐ',
+      freelancerName: freelancer?.fullName || contract.freelancerName || 'Chưa có Freelancer'
     };
   };
 
-  const handleMarkAsPaid = async (id) => {
+  const handleCleanupInvalidSchedules = async () => {
+    const invalidSchedules = safeArray(schedules).filter(schedule => !contractMap.has(schedule.contractId));
+    if (invalidSchedules.length === 0) {
+      showToast('Không có dữ liệu lỗi cần dọn.', 'success');
+      return;
+    }
+
     try {
-      const today = new Date().toISOString().split('T')[0];
-      await updatePaymentStatus(id, 'paid', today);
-      showToast('Đánh dấu thanh toán thành công!', 'success');
+      await Promise.all(invalidSchedules.map(schedule => deletePaymentSchedule(schedule.id)));
+      showToast(`Đã dọn ${invalidSchedules.length} đợt thanh toán lỗi.`, 'success');
       loadData();
     } catch (err) {
-      showToast('Có lỗi xảy ra khi cập nhật.', 'error');
+      console.error('Failed to cleanup invalid payment schedules', err);
+      showToast('Có lỗi xảy ra khi dọn dữ liệu thanh toán.', 'error');
     }
   };
 
   const safeSchedules = safeArray(schedules);
+  const enrichedSchedules = safeSchedules
+    .map(schedule => {
+      const contract = contractMap.get(schedule.contractId);
+      const details = getContractDetails(contract);
+      return { ...schedule, contract, details };
+    });
+  const validSchedules = enrichedSchedules.filter(schedule => schedule.contract && schedule.details);
+  const invalidSchedules = enrichedSchedules.filter(schedule => !schedule.contract);
 
-  const filteredSchedules = safeSchedules.filter(p => {
+  const filteredSchedules = validSchedules.filter(p => {
     if (statusFilter === 'all') return true;
     return p.status === statusFilter;
   });
 
   // Calculate summary metrics
-  const totalAmount = safeSchedules.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  const paidAmount = safeSchedules.filter(p => p.status === 'paid').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  const pendingAmount = safeSchedules.filter(p => p.status === 'pending' || p.status === 'overdue').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  const overdueAmount = safeSchedules.filter(p => p.status === 'overdue').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const totalAmount = validSchedules.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const paidAmount = validSchedules.filter(p => p.status === 'paid').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const pendingAmount = validSchedules.filter(p => p.status === 'pending' || p.status === 'overdue').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
   return (
     <div>
@@ -119,6 +134,22 @@ export default function Payments() {
         </button>
       </div>
 
+      {invalidSchedules.length > 0 && (
+        <div className="card" style={{ marginBottom: '1rem', borderColor: 'var(--warning)', background: 'rgba(245, 158, 11, 0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <div>
+              <div className="bold" style={{ color: 'var(--warning)' }}>Phát hiện {invalidSchedules.length} đợt thanh toán lỗi</div>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', marginTop: '0.25rem' }}>
+                Các dòng này không còn liên kết với hợp đồng nào nên đã được ẩn khỏi bảng và tổng tiền.
+              </div>
+            </div>
+            <button className="btn btn-secondary btn-sm" onClick={handleCleanupInvalidSchedules}>
+              Dọn dữ liệu lỗi
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="card">
         {filteredSchedules.length === 0 ? (
           <div className="empty-state">
@@ -140,7 +171,7 @@ export default function Payments() {
               </thead>
               <tbody>
                 {filteredSchedules.map(p => {
-                  const details = getContractDetails(p.contractId);
+                  const details = p.details;
                   return (
                     <tr 
                       key={p.id} 
