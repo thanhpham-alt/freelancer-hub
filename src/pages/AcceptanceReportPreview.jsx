@@ -19,7 +19,7 @@ export default function AcceptanceReportPreview() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState('');
 
-  useEffect(() => {
+  useEffect(() => { const fetchData = async () => {
     const r = await getAcceptanceReportById(id);
     if (r) {
       setReport(r);
