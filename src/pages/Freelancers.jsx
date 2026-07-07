@@ -31,6 +31,7 @@ export default function Freelancers() {
   const [importSelections, setImportSelections] = useState({});
   const [activeImportIdx, setActiveImportIdx] = useState(0);
   const [importSource, setImportSource] = useState('AI');
+  const [isImporting, setIsImporting] = useState(false);
 
   // AI Import State
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -106,6 +107,8 @@ export default function Freelancers() {
 
 
   const handleConfirmImport = async () => {
+    if (isImporting) return;
+
     const toImport = parsedFreelancers
       .filter((_, idx) => importSelections[idx])
       .map(normalizeFreelancerImport);
@@ -122,8 +125,17 @@ export default function Freelancers() {
       return;
     }
     
+    setIsImporting(true);
+
     try {
-      await Promise.all(toImport.map(f => saveFreelancer(f)));
+      for (const freelancer of toImport) {
+        await Promise.race([
+          saveFreelancer(freelancer),
+          new Promise((_, reject) => {
+            setTimeout(() => reject(new Error(`Lưu ${freelancer.fullName} mất quá lâu. Vui lòng kiểm tra kết nối Firebase.`)), 15000);
+          })
+        ]);
+      }
       
       showToast(`Đã import thành công ${toImport.length} freelancer!`, 'success');
       setIsImportModalOpen(false);
@@ -131,6 +143,8 @@ export default function Freelancers() {
     } catch (err) {
       console.error('Failed to import freelancers', err);
       showToast(err.message || 'Có lỗi xảy ra khi lưu freelancer. Vui lòng kiểm tra dữ liệu và thử lại.', 'error');
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -698,16 +712,35 @@ export default function Freelancers() {
       {/* DOCX Import Modal */}
       <Modal
         isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
+        onClose={() => {
+          if (!isImporting) setIsImportModalOpen(false);
+        }}
         title={`Import Freelancer từ ${importSource} (${parsedFreelancers.length} được tìm thấy)`}
         size="xl"
         footer={
           <>
-            <button className="btn btn-secondary btn-sm" onClick={() => setIsImportModalOpen(false)}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setIsImportModalOpen(false)}
+              disabled={isImporting}
+            >
               Hủy bỏ
             </button>
-            <button className="btn btn-primary btn-sm" onClick={handleConfirmImport}>
-              Xác nhận Import ({Object.values(importSelections).filter(Boolean).length} người)
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={handleConfirmImport}
+              disabled={isImporting || Object.values(importSelections).filter(Boolean).length === 0}
+            >
+              {isImporting ? (
+                <>
+                  <AppIcon name="loader" size={16} className="spin-icon" />
+                  Đang import...
+                </>
+              ) : (
+                <>Xác nhận Import ({Object.values(importSelections).filter(Boolean).length} người)</>
+              )}
             </button>
           </>
         }
