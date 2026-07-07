@@ -14,11 +14,11 @@ export default function AcceptanceReports() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState(null);
 
-  const loadData = () => {
+  const loadData = async () => {
     setReports(getAcceptanceReports());
-    setContracts(getContracts());
-    setFreelancers(getFreelancers());
-    setJobs(getJobs());
+    getContracts().then(setContracts);
+    getFreelancers().then(setFreelancers);
+    getJobs().then(setJobs);
   };
 
   useEffect(() => {
@@ -37,15 +37,15 @@ export default function AcceptanceReports() {
     };
   };
 
-  const handleDeleteClick = (e, id) => {
+  const handleDeleteClick = async (e, id) => {
     e.stopPropagation();
     setSelectedReportId(id);
     setIsConfirmOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     try {
-      deleteAcceptanceReport(selectedReportId);
+      await deleteAcceptanceReport(selectedReportId);
       showToast('Đã xóa biên bản nghiệm thu thành công!', 'success');
       setIsConfirmOpen(false);
       loadData();

@@ -11,10 +11,10 @@ export default function Payments() {
   const [freelancers, setFreelancers] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
 
-  const loadData = () => {
+  const loadData = async () => {
     setSchedules(getPaymentSchedules());
-    setContracts(getContracts());
-    setFreelancers(getFreelancers());
+    getContracts().then(setContracts);
+    getFreelancers().then(setFreelancers);
   };
 
   useEffect(() => {
@@ -31,10 +31,10 @@ export default function Payments() {
     };
   };
 
-  const handleMarkAsPaid = (id) => {
+  const handleMarkAsPaid = async (id) => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      updatePaymentStatus(id, 'paid', today);
+      await updatePaymentStatus(id, 'paid', today);
       showToast('Đánh dấu thanh toán thành công!', 'success');
       loadData();
     } catch (err) {
@@ -150,7 +150,7 @@ export default function Payments() {
                             className="btn btn-primary btn-sm" 
                             onClick={() => {
                               try {
-                                updatePaymentStatus(p.id, 'paid', new Date().toISOString().split('T')[0]);
+                                await updatePaymentStatus(p.id, 'paid', new Date().toISOString().split('T')[0]);
                                 showToast('Đã đánh dấu thanh toán', 'success');
                                 loadData();
                               } catch (err) {
@@ -166,7 +166,7 @@ export default function Payments() {
                             style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
                             onClick={() => {
                               try {
-                                updatePaymentStatus(p.id, 'pending', '');
+                                await updatePaymentStatus(p.id, 'pending', '');
                                 showToast('Đã hủy thanh toán', 'success');
                                 loadData();
                               } catch (err) {

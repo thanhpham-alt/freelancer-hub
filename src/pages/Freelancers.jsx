@@ -55,7 +55,7 @@ export default function Freelancers() {
     notes: ''
   });
 
-  const loadFreelancers = () => {
+  const loadFreelancers = async () => {
     const list = getFreelancers();
     setFreelancers(list);
     setSelectedIds(prev => prev.filter(id => list.some(f => f.id === id)));
@@ -70,13 +70,13 @@ export default function Freelancers() {
     return (f.role || 'other') === roleFilter;
   });
 
-  const handleSelectRow = (id) => {
+  const handleSelectRow = async (id) => {
     setSelectedIds(prev => 
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
 
-  const handleSelectAll = () => {
+  const handleSelectAll = async () => {
     if (selectedIds.length === filteredFreelancers.length) {
       setSelectedIds([]);
     } else {
@@ -84,10 +84,10 @@ export default function Freelancers() {
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     try {
       selectedIds.forEach(id => {
-        deleteFreelancer(id);
+        await deleteFreelancer(id);
       });
       showToast(`Đã xóa thành công ${selectedIds.length} freelancer!`, 'success');
       setSelectedIds([]);
@@ -101,7 +101,7 @@ export default function Freelancers() {
 
 
 
-  const handleConfirmImport = () => {
+  const handleConfirmImport = async () => {
     const toImport = parsedFreelancers.filter((_, idx) => importSelections[idx]);
     if (toImport.length === 0) {
       showToast('Vui lòng chọn ít nhất 1 freelancer để import.', 'warning');
@@ -118,7 +118,7 @@ export default function Freelancers() {
     
     let count = 0;
     toImport.forEach(f => {
-      saveFreelancer(f);
+      await saveFreelancer(f);
       count++;
     });
     
@@ -171,7 +171,7 @@ export default function Freelancers() {
     }));
   };
 
-  const handleParsedFieldChange = (idx, field, value) => {
+  const handleParsedFieldChange = async (idx, field, value) => {
     setParsedFreelancers(prev => {
       const copy = [...prev];
       copy[idx] = { ...copy[idx], [field]: value };
@@ -232,7 +232,7 @@ export default function Freelancers() {
     setIsModalOpen(true);
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = async (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -279,7 +279,7 @@ export default function Freelancers() {
     }
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.fullName) {
       showToast('Vui lòng nhập Họ và tên (*)', 'warning');
@@ -287,7 +287,7 @@ export default function Freelancers() {
     }
 
     try {
-      saveFreelancer(formData);
+      await saveFreelancer(formData);
       showToast(selectedFreelancer ? 'Cập nhật freelancer thành công!' : 'Thêm freelancer thành công!', 'success');
       setIsModalOpen(false);
       loadFreelancers();
@@ -296,10 +296,10 @@ export default function Freelancers() {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedFreelancer) {
       try {
-        deleteFreelancer(selectedFreelancer.id);
+        await deleteFreelancer(selectedFreelancer.id);
         showToast('Xóa freelancer thành công!', 'success');
         setIsModalOpen(false);
         setIsConfirmOpen(false);

@@ -19,7 +19,7 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    setStats(getDashboardStats());
+    getDashboardStats().then(setStats);
   }, []);
 
   return (

@@ -14,10 +14,10 @@ export default function Contracts() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [selectedContractId, setSelectedContractId] = useState(null);
 
-  const loadData = () => {
-    setContracts(getContracts());
-    setFreelancers(getFreelancers());
-    setJobs(getJobs());
+  const loadData = async () => {
+    getContracts().then(setContracts);
+    getFreelancers().then(setFreelancers);
+    getJobs().then(setJobs);
   };
 
   useEffect(() => {
@@ -39,15 +39,15 @@ export default function Contracts() {
     return c.status === statusFilter;
   });
 
-  const handleDeleteClick = (e, id) => {
+  const handleDeleteClick = async (e, id) => {
     e.stopPropagation();
     setSelectedContractId(id);
     setIsConfirmOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     try {
-      deleteContract(selectedContractId);
+      await deleteContract(selectedContractId);
       showToast('Đã xóa hợp đồng thành công!', 'success');
       setIsConfirmOpen(false);
       loadData();

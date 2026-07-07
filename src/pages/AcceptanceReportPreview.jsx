@@ -20,15 +20,15 @@ export default function AcceptanceReportPreview() {
   const [exportProgress, setExportProgress] = useState('');
 
   useEffect(() => {
-    const r = getAcceptanceReportById(id);
+    const r = await getAcceptanceReportById(id);
     if (r) {
       setReport(r);
-      const c = getContractById(r.contractId);
+      const c = await getContractById(r.contractId);
       if (c) {
         setContract(c);
-        setFreelancer(getFreelancerById(c.freelancerId));
+        setFreelancer(await getFreelancerById(c.freelancerId));
         if (c.jobId) {
-          setJob(getJobById(c.jobId));
+          setJob(await getJobById(c.jobId));
         }
       }
       if (r.googleDocUrl) setGoogleDocUrl(r.googleDocUrl);
@@ -49,7 +49,7 @@ export default function AcceptanceReportPreview() {
   const reportDateParts = extractDate(report.reportDate);
   const contractDateParts = extractDate(contract.signDate);
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     window.print();
   };
 
@@ -60,7 +60,7 @@ export default function AcceptanceReportPreview() {
       const { docUrl } = await exportAcceptanceReportToGoogleDocs({
         report, contract, freelancer, company, onProgress: setExportProgress
       });
-      saveAcceptanceReport({ ...report, googleDocUrl: docUrl });
+      await saveAcceptanceReport({ ...report, googleDocUrl: docUrl });
       setGoogleDocUrl(docUrl);
       setExportProgress('✅ Hoàn tất! Đang mở Google Docs...');
       setTimeout(() => { window.open(docUrl, '_blank'); setIsExporting(false); }, 1000);

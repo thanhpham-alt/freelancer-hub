@@ -69,7 +69,7 @@ export default function ContractForm() {
     }
 
     if (isEditing) {
-      const contract = getContractById(id);
+      const contract = await getContractById(id);
       if (contract) {
         setFormData({
           ...contract,
@@ -77,7 +77,7 @@ export default function ContractForm() {
         });
         
         // Load associated payment phases
-        const phases = getPaymentSchedulesByContract(id);
+        const phases = await getPaymentSchedulesByContract(id);
         if (phases && phases.length > 0) {
           setPaymentPhases(phases.map((p, idx) => ({
             ...p,
@@ -123,7 +123,7 @@ export default function ContractForm() {
   }, [formData.items, formData.taxRate]);
 
   // Auto-generate contract number when freelancer or sign date changes
-  const handleFreelancerChange = (e) => {
+  const handleFreelancerChange = async (e) => {
     const fId = e.target.value;
     const f = freelancers.find(item => item.id === fId);
     if (f) {
@@ -136,7 +136,7 @@ export default function ContractForm() {
     }
   };
 
-  const handleSignDateChange = (e) => {
+  const handleSignDateChange = async (e) => {
     const dateStr = e.target.value;
     const f = freelancers.find(item => item.id === formData.freelancerId);
     setFormData(prev => {
@@ -150,7 +150,7 @@ export default function ContractForm() {
   };
 
   // General field changes
-  const handleInputChange = (e) => {
+  const handleInputChange = async (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -159,7 +159,7 @@ export default function ContractForm() {
   };
 
   // Item table handlers
-  const handleItemChange = (index, field, value) => {
+  const handleItemChange = async (index, field, value) => {
     const list = [...formData.items];
     list[index][field] = value;
     setFormData(prev => ({ ...prev, items: list }));
@@ -194,9 +194,9 @@ export default function ContractForm() {
   const dragItem = { current: null };
   const [dragOverIdx, setDragOverIdx] = useState(null);
 
-  const handleDragStart = (idx) => { dragItem.current = idx; };
-  const handleDragEnter = (idx) => { setDragOverIdx(idx); };
-  const handleDragEnd = () => {
+  const handleDragStart = async (idx) => { dragItem.current = idx; };
+  const handleDragEnter = async (idx) => { setDragOverIdx(idx); };
+  const handleDragEnd = async () => {
     if (dragItem.current !== null && dragOverIdx !== null && dragItem.current !== dragOverIdx) {
       const list = [...formData.items];
       const dragged = list.splice(dragItem.current, 1)[0];
@@ -208,7 +208,7 @@ export default function ContractForm() {
   };
 
   // Payment Phase handlers
-  const handlePhaseChange = (index, field, value) => {
+  const handlePhaseChange = async (index, field, value) => {
     const list = [...paymentPhases];
     list[index][field] = value;
     
@@ -250,7 +250,7 @@ export default function ContractForm() {
     setPaymentPhases(list);
   };
 
-  const handleSave = (status) => {
+  const handleSave = async (status) => {
     // Validation
     if (!formData.contractNumber || !formData.jobTitle || !formData.startDate || !formData.endDate) {
       showToast('Vui lòng nhập đầy đủ thông tin bắt buộc (*)', 'warning');
@@ -271,17 +271,17 @@ export default function ContractForm() {
       };
 
       // Save contract
-      const saved = saveContract(finalContract);
+      const saved = await saveContract(finalContract);
 
       // Save payment phases
       if (isEditing) {
         // Remove old phases of this contract first
-        const oldPhases = getPaymentSchedulesByContract(id);
-        oldPhases.forEach(op => deletePaymentSchedule(op.id));
+        const oldPhases = await getPaymentSchedulesByContract(id);
+        oldPhases.forEach(op => await deletePaymentSchedule(op.id));
       }
 
       paymentPhases.forEach(p => {
-        savePaymentSchedule({
+        await savePaymentSchedule({
           contractId: saved.id,
           phase: p.phase,
           percentage: Number(p.percentage),

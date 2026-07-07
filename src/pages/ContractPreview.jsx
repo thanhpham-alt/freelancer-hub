@@ -23,12 +23,12 @@ export default function ContractPreview() {
   const [googleDocUrl, setGoogleDocUrl] = useState('');
 
   useEffect(() => {
-    const c = getContractById(id);
+    const c = await getContractById(id);
     if (c) {
       setContract(c);
-      setFreelancer(getFreelancerById(c.freelancerId));
-      if (c.jobId) setJob(getJobById(c.jobId));
-      setPayments(getPaymentSchedulesByContract(c.id).sort((a, b) => a.phase - b.phase));
+      setFreelancer(await getFreelancerById(c.freelancerId));
+      if (c.jobId) setJob(await getJobById(c.jobId));
+      setPayments(await getPaymentSchedulesByContract(c.id).sort((a, b) => a.phase - b.phase));
       if (c.googleDocUrl) setGoogleDocUrl(c.googleDocUrl);
     }
     setCompany(getCompanyInfo());
@@ -61,7 +61,7 @@ export default function ContractPreview() {
         onProgress: setExportProgress
       });
       // Save link back to contract
-      saveContract({ ...contract, googleDocUrl: docUrl });
+      await saveContract({ ...contract, googleDocUrl: docUrl });
       setGoogleDocUrl(docUrl);
       setExportProgress('✅ Hoàn tất! Đang mở Google Docs...');
       setTimeout(() => { window.open(docUrl, '_blank'); setIsExporting(false); }, 1000);

@@ -22,9 +22,9 @@ export default function Jobs() {
     status: 'draft'
   });
 
-  const loadData = () => {
-    setJobs(getJobs());
-    setFreelancers(getFreelancers());
+  const loadData = async () => {
+    getJobs().then(setJobs);
+    getFreelancers().then(setFreelancers);
   };
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function Jobs() {
     setIsModalOpen(true);
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = async (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -72,7 +72,7 @@ export default function Jobs() {
     }));
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.projectName || !formData.freelancerId) {
       showToast('Vui lòng nhập tên dự án và gán Freelancer!', 'warning');
@@ -80,7 +80,7 @@ export default function Jobs() {
     }
 
     try {
-      saveJob(formData);
+      await saveJob(formData);
       showToast(selectedJob ? 'Cập nhật dự án thành công!' : 'Tạo dự án thành công!', 'success');
       setIsModalOpen(false);
       loadData();
@@ -89,10 +89,10 @@ export default function Jobs() {
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedJob) {
       try {
-        deleteJob(selectedJob.id);
+        await deleteJob(selectedJob.id);
         showToast('Xóa dự án thành công!', 'success');
         setIsModalOpen(false);
         setIsConfirmOpen(false);

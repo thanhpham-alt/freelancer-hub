@@ -36,7 +36,7 @@ export default function AcceptanceReportForm() {
   // Items from original contract (read-only reference/template)
   const [originalContractItems, setOriginalContractItems] = useState([]);
 
-  const loadData = () => {
+  const loadData = async () => {
     const cts = getContracts().filter(c => c.status === 'signed');
     const fls = getFreelancers();
     const jbs = getJobs();
@@ -52,7 +52,7 @@ export default function AcceptanceReportForm() {
     }
 
     if (isEditing) {
-      const report = getAcceptanceReportById(id);
+      const report = await getAcceptanceReportById(id);
       if (report) {
         setFormData(report);
         const originalContract = getContracts().find(c => c.id === report.contractId);
@@ -76,12 +76,12 @@ export default function AcceptanceReportForm() {
     loadData();
   }, [id, isEditing]);
 
-  const handleContractSelection = (contractId, availableContracts = contracts) => {
+  const handleContractSelection = async (contractId, availableContracts = contracts) => {
     const contract = availableContracts.find(c => c.id === contractId);
     if (!contract) return;
 
     // Load paid amount from payment schedules
-    const schedules = getPaymentSchedulesByContract(contract.id);
+    const schedules = await getPaymentSchedulesByContract(contract.id);
     const paid = schedules.filter(p => p.status === 'paid').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
     // Initial items copy from contract
@@ -97,11 +97,11 @@ export default function AcceptanceReportForm() {
     }));
   };
 
-  const handleContractChange = (e) => {
+  const handleContractChange = async (e) => {
     handleContractSelection(e.target.value);
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = async (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -135,7 +135,7 @@ export default function AcceptanceReportForm() {
   }, [formData.items, formData.contractValue, formData.paidAmount]);
 
   // Edit item table
-  const handleItemChange = (index, field, value) => {
+  const handleItemChange = async (index, field, value) => {
     const list = [...formData.items];
     list[index][field] = value;
     setFormData(prev => ({ ...prev, items: list }));
@@ -156,7 +156,7 @@ export default function AcceptanceReportForm() {
     setFormData(prev => ({ ...prev, items: list }));
   };
 
-  const handleSave = (status) => {
+  const handleSave = async (status) => {
     if (!formData.contractId || !formData.reportDate) {
       showToast('Vui lòng nhập đầy đủ thông tin bắt buộc (*)', 'warning');
       return;
@@ -168,7 +168,7 @@ export default function AcceptanceReportForm() {
         status: status
       };
 
-      const saved = saveAcceptanceReport(savedReport);
+      const saved = await saveAcceptanceReport(savedReport);
       showToast(isEditing ? 'Cập nhật biên bản thành công!' : 'Tạo biên bản thành công!', 'success');
       navigate(`/acceptance-reports/${saved.id}`);
     } catch (err) {

@@ -25,7 +25,7 @@ export default function Settings() {
     if (storedTax) setTaxRate(Number(storedTax));
   }, []);
 
-  const handleCompanyChange = (e) => {
+  const handleCompanyChange = async (e) => {
     const { name, value } = e.target;
     setCompany(prev => ({
       ...prev,
@@ -33,7 +33,7 @@ export default function Settings() {
     }));
   };
 
-  const handleSaveCompany = (e) => {
+  const handleSaveCompany = async (e) => {
     e.preventDefault();
     try {
       saveCompanyInfo(company);
@@ -43,13 +43,13 @@ export default function Settings() {
     }
   };
 
-  const handleResetCompany = () => {
+  const handleResetCompany = async () => {
     const fresh = resetCompanyInfo();
     setCompany(fresh);
     showToast('Đã khôi phục thông tin công ty mặc định.', 'info');
   };
 
-  const handleSaveTax = () => {
+  const handleSaveTax = async () => {
     try {
       localStorage.setItem('fh_default_tax_rate', String(taxRate));
       showToast('Lưu thuế suất mặc định thành công!', 'success');
@@ -58,7 +58,7 @@ export default function Settings() {
     }
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
       const dataStr = exportAllData();
       const blob = new Blob([dataStr], { type: 'application/json' });
@@ -76,7 +76,7 @@ export default function Settings() {
     }
   };
 
-  const handleImport = (e) => {
+  const handleImport = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
