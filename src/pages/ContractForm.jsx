@@ -4,6 +4,7 @@ import { getFreelancers, getJobs, getContractById, saveContract, savePaymentSche
 import { getCompanyInfo } from '../data/companyInfo';
 import { generateContractNumber, numberToVietnameseWords } from '../utils/formatters';
 import { calculateItemsTotal, calculateTax, calculateNetAmount } from '../utils/calculations';
+import { parseContractWithAI } from '../utils/aiParser';
 import { useToast } from '../components/Toast';
 import { AppIcon, Modal } from '../components';
 
@@ -63,9 +64,7 @@ export default function ContractForm() {
     setDefaultTaxRate(tax);
 
     if (fls.length === 0) {
-      showToast('Cần có ít nhất 1 Freelancer trong hệ thống để tạo hợp đồng!', 'warning');
-      navigate('/freelancers');
-      return;
+      showToast('Bạn có thể dùng AI điền hợp đồng trước, nhưng cần tạo Freelancer trước khi lưu.', 'warning');
     }
 
     if (isEditing) {
@@ -93,9 +92,9 @@ export default function ContractForm() {
       const firstFreelancer = fls[0];
       setFormData(prev => ({
         ...prev,
-        freelancerId: firstFreelancer.id,
+        freelancerId: firstFreelancer?.id || '',
         taxRate: tax,
-        contractNumber: generateContractNumber(firstFreelancer.fullName, prev.signDate, comp.shortName)
+        contractNumber: firstFreelancer ? generateContractNumber(firstFreelancer.fullName, prev.signDate, comp.shortName) : prev.contractNumber
       }));
     }
     };
@@ -254,6 +253,11 @@ export default function ContractForm() {
 
   const handleSave = async (status) => {
     // Validation
+    if (!formData.freelancerId) {
+      showToast('Vui lòng tạo và chọn Freelancer trước khi lưu hợp đồng.', 'warning');
+      return;
+    }
+
     if (!formData.contractNumber || !formData.jobTitle || !formData.startDate || !formData.endDate) {
       showToast('Vui lòng nhập đầy đủ thông tin bắt buộc (*)', 'warning');
       return;
@@ -316,59 +320,14 @@ export default function ContractForm() {
     setIsAiLoading(true);
 
     const today = new Date().toISOString().split('T')[0];
-    const freelancerNames = freelancers.map(f => `${f.fullName} (id: ${f.id})`).join(', ');
-
-    const prompt = `Bạn là trợ lý phân tích hợp đồng tiếng Việt. Hãy phân tích văn bản hợp đồng sau và trả về JSON (đầy đủ, không giải thích thêm) chứa các trường sau:
-
-{
-  "contractNumber": "Số hợp đồng (chuỗi)",
-  "jobTitle": "Tên công việc/dịch vụ chính",
-  "contractType": "Loại hợp đồng (chuỗi, mặc định: Hợp đồng Cộng tác viên (không độc quyền))",
-  "startDate": "Ngày bắt đầu (YYYY-MM-DD)",
-  "endDate": "Ngày kết thúc (YYYY-MM-DD)",
-  "signDate": "Ngày ký (YYYY-MM-DD, mặc định ${today} nếu không có)",
-  "workLocation": "Nơi làm việc (mặc định: tự do)",
-  "paymentMethod": "Phương thức thanh toán (mặc định: Chuyển khoản)",
-  "taxRate": số thuế suất (số nguyên 0-100, mặc định 10),
-  "freelancerId": "id của freelancer gần nhất từ danh sách sau nếu tển trung khớp: ${freelancerNames}. Nếu không khớp, để rỗng.",
-  "items": [
-    { "name": "Tên hạng mục", "unit": "Đơn vị (Gói/Buổi/Video/...)", "quantity": 1, "unitPrice": 0 }
-  ],
-  "paymentPhases": [
-    { "phase": 1, "percentage": 50, "description": "Mô tả đợt thanh toán", "dueDate": "" }
-  ]
-}
-
-Văn bản hợp đồng:
----
-${aiContractText}
----
-
-Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
 
     try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: 'application/json', temperature: 0.1 }
-          })
-        }
-      );
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || 'Lỗi kết nối Gemini');
-      }
-
-      const data = await res.json();
-      const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!jsonText) throw new Error('Không có kết quả từ AI');
-
-      const parsed = JSON.parse(jsonText);
+      const parsed = await parseContractWithAI({
+        text: aiContractText,
+        apiKey: key,
+        freelancers,
+        today
+      });
 
       // Apply parsed data to formData
       setFormData(prev => ({
@@ -404,7 +363,7 @@ Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
       setIsAiModalOpen(false);
       setAiContractText('');
     } catch (err) {
-      console.error(err);
+      console.error('Failed to parse contract with AI', err);
       showToast(err.message || 'Lỗi khi gọi AI.', 'error');
     } finally {
       setIsAiLoading(false);
@@ -785,7 +744,7 @@ Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Gemini Key */}
           <div className="form-group">
-            <label className="form-label">🔑 Gemini API Key</label>
+            <label className="form-label">Gemini API Key</label>
             <input
               type="password"
               className="form-input"
@@ -800,7 +759,7 @@ Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
 
           {/* Contract text input */}
           <div className="form-group">
-            <label className="form-label">📝 Dán văn bản hợp đồng cũ vào đây</label>
+            <label className="form-label">Dán văn bản hợp đồng cũ vào đây</label>
             <textarea
               className="form-input"
               rows={14}
@@ -820,7 +779,7 @@ Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
             fontSize: '0.83rem',
             color: 'var(--text-secondary)'
           }}>
-            <strong style={{ color: 'var(--primary)' }}>💡 Mẹo:</strong> Bạn có thể dán văn bản hợp đồng cũ dưới bất kỳ định dạng nào — PDF copy, Word, hay email. AI sẽ hiểu và điền vào form. Sau khi điền, kiểm tra lại các trường trước khi lưu.
+            <strong style={{ color: 'var(--primary)' }}>Mẹo:</strong> Bạn có thể dán văn bản hợp đồng cũ dưới bất kỳ định dạng nào — PDF copy, Word, hay email. AI sẽ hiểu và điền vào form. Sau khi điền, kiểm tra lại các trường trước khi lưu.
           </div>
         </div>
       </Modal>

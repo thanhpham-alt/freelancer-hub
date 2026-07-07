@@ -118,11 +118,16 @@ export default function Freelancers() {
       return;
     }
     
-    await Promise.all(toImport.map(f => saveFreelancer(f)));
-    
-    showToast(`Đã import thành công ${toImport.length} freelancer!`, 'success');
-    setIsImportModalOpen(false);
-    loadFreelancers();
+    try {
+      await Promise.all(toImport.map(f => saveFreelancer(f)));
+      
+      showToast(`Đã import thành công ${toImport.length} freelancer!`, 'success');
+      setIsImportModalOpen(false);
+      loadFreelancers();
+    } catch (err) {
+      console.error('Failed to import freelancers from AI', err);
+      showToast(err.message || 'Có lỗi xảy ra khi lưu freelancer từ AI.', 'error');
+    }
   };
 
   const handleAiParse = async () => {
@@ -155,7 +160,7 @@ export default function Freelancers() {
       showToast(`Đã nhận diện được ${results.length} freelancer từ AI!`, 'success');
       setAiText('');
     } catch (err) {
-      console.error(err);
+      console.error('Failed to parse freelancers with AI', err);
       showToast(err.message || 'Lỗi khi gọi API Gemini.', 'error');
     } finally {
       setIsAiLoading(false);
