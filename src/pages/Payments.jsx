@@ -81,13 +81,6 @@ export default function Payments() {
             <div className="stat-label">Còn lại cần trả</div>
           </div>
         </div>
-        <div className="stat-card stat-card-rose">
-          <div className="stat-icon">🚨</div>
-          <div className="stat-info">
-            <div className="stat-value">{formatCurrency(overdueAmount)}đ</div>
-            <div className="stat-label">Tổng nợ quá hạn</div>
-          </div>
-        </div>
       </div>
 
       <div className="filter-bar">
@@ -132,8 +125,6 @@ export default function Payments() {
                   <th>Số hợp đồng</th>
                   <th>Đợt</th>
                   <th style={{ textAlign: 'right' }}>Số tiền (VNĐ)</th>
-                  <th>Hạn thanh toán</th>
-                  <th>Ngày thanh toán</th>
                   <th>Trạng thái</th>
                   <th style={{ textAlign: 'center' }}>Thao tác</th>
                 </tr>
@@ -150,8 +141,6 @@ export default function Payments() {
                       <td className="bold" style={{ color: 'var(--primary)' }}>{details.number}</td>
                       <td>Đợt {p.phase} ({p.percentage}%)</td>
                       <td className="bold text-right">{formatCurrency(p.amount)}</td>
-                      <td>{formatDate(p.dueDate)}</td>
-                      <td>{p.paidDate ? formatDate(p.paidDate) : '—'}</td>
                       <td>
                         <StatusBadge status={p.status} />
                       </td>
@@ -159,12 +148,34 @@ export default function Payments() {
                         {p.status !== 'paid' ? (
                           <button 
                             className="btn btn-primary btn-sm" 
-                            onClick={() => handleMarkAsPaid(p.id)}
+                            onClick={() => {
+                              try {
+                                updatePaymentStatus(p.id, 'paid', new Date().toISOString().split('T')[0]);
+                                showToast('Đã đánh dấu thanh toán', 'success');
+                                loadData();
+                              } catch (err) {
+                                showToast('Có lỗi xảy ra.', 'error');
+                              }
+                            }}
                           >
                             Xác nhận TT
                           </button>
                         ) : (
-                          <span style={{ color: 'var(--success)', fontWeight: 600, fontSize: '0.85rem' }}>✓ Đã chuyển</span>
+                          <button 
+                            className="btn btn-secondary btn-sm" 
+                            style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
+                            onClick={() => {
+                              try {
+                                updatePaymentStatus(p.id, 'pending', '');
+                                showToast('Đã hủy thanh toán', 'success');
+                                loadData();
+                              } catch (err) {
+                                showToast('Có lỗi xảy ra.', 'error');
+                              }
+                            }}
+                          >
+                            Hủy thanh toán
+                          </button>
                         )}
                       </td>
                     </tr>

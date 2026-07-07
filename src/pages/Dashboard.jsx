@@ -61,7 +61,7 @@ export default function Dashboard() {
 
       <div className="card">
         <div className="card-title">
-          <span>Thanh toán đến hạn & quá hạn</span>
+          <span>Thanh toán</span>
           <button className="btn btn-secondary btn-sm" onClick={() => navigate('/payments')}>
             Xem tất cả
           </button>
@@ -81,7 +81,6 @@ export default function Dashboard() {
                   <th>Dự án</th>
                   <th>Đợt</th>
                   <th style={{ textAlign: 'right' }}>Số tiền (VNĐ)</th>
-                  <th>Hạn thanh toán</th>
                   <th>Trạng thái</th>
                 </tr>
               </thead>
@@ -102,7 +101,6 @@ export default function Dashboard() {
                     <td className="bold text-right" style={{ color: p.status === 'overdue' ? 'var(--danger)' : 'var(--text-primary)' }}>
                       {formatCurrency(p.amount)}
                     </td>
-                    <td>{formatDate(p.dueDate)}</td>
                     <td>
                       <StatusBadge status={p.status} />
                     </td>

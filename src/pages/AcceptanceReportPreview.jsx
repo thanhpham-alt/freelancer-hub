@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getAcceptanceReportById, getContractById, getFreelancerById, getJobById } from '../data/store';
+import { getAcceptanceReportById, getContractById, getFreelancerById, getJobById, saveAcceptanceReport } from '../data/store';
 import { getCompanyInfo } from '../data/companyInfo';
 import { formatCurrency, formatDate, formatDateLong, numberToVietnameseWords, extractDate, generateReportNumber } from '../utils/formatters';
+import { exportAcceptanceReportToGoogleDocs } from '../utils/googleDocsExport';
 import '../print.css';
 
 export default function AcceptanceReportPreview() {
@@ -14,6 +15,9 @@ export default function AcceptanceReportPreview() {
   const [freelancer, setFreelancer] = useState(null);
   const [company, setCompany] = useState({});
   const [job, setJob] = useState(null);
+  const [googleDocUrl, setGoogleDocUrl] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState('');
 
   useEffect(() => {
     const r = getAcceptanceReportById(id);
@@ -27,6 +31,7 @@ export default function AcceptanceReportPreview() {
           setJob(getJobById(c.jobId));
         }
       }
+      if (r.googleDocUrl) setGoogleDocUrl(r.googleDocUrl);
     }
     setCompany(getCompanyInfo());
   }, [id]);
@@ -48,6 +53,24 @@ export default function AcceptanceReportPreview() {
     window.print();
   };
 
+  const handleGoogleDocsExport = async () => {
+    setIsExporting(true);
+    setExportProgress('🔐 Đang xác thực Google...');
+    try {
+      const { docUrl } = await exportAcceptanceReportToGoogleDocs({
+        report, contract, freelancer, company, onProgress: setExportProgress
+      });
+      saveAcceptanceReport({ ...report, googleDocUrl: docUrl });
+      setGoogleDocUrl(docUrl);
+      setExportProgress('✅ Hoàn tất! Đang mở Google Docs...');
+      setTimeout(() => { window.open(docUrl, '_blank'); setIsExporting(false); }, 1000);
+    } catch (err) {
+      console.error(err);
+      setExportProgress(`❌ Lỗi: ${err.message}`);
+      setTimeout(() => setIsExporting(false), 3000);
+    }
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -59,6 +82,15 @@ export default function AcceptanceReportPreview() {
           <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/acceptance-reports/${report.id}/edit`)}>
             ✏️ Chỉnh sửa
           </button>
+          {googleDocUrl ? (
+            <a href={googleDocUrl} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
+              📄 Mở Google Docs
+            </a>
+          ) : (
+            <button className="btn btn-secondary btn-sm" onClick={handleGoogleDocsExport} disabled={isExporting}>
+              {isExporting ? '⏳ Đang xuất...' : '📄 Xuất Google Docs'}
+            </button>
+          )}
           <button className="btn btn-primary btn-sm" onClick={handlePrint}>
             🖨️ In biên bản (PDF)
           </button>
@@ -243,6 +275,29 @@ export default function AcceptanceReportPreview() {
 
         </div>
       </div>
+
+      {isExporting && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(7,10,19,0.85)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999, flexDirection: 'column', gap: '1rem'
+        }}>
+          <div style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border-glow)',
+            borderRadius: 'var(--radius-lg)', padding: '2.5rem 3rem',
+            textAlign: 'center', boxShadow: 'var(--shadow-glow)', maxWidth: '400px'
+          }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📄</div>
+            <div style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.5rem', fontWeight: 600 }}>
+              Xuất Google Docs
+            </div>
+            <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              {exportProgress}
+            </div>
+            <div className="loading-spinner" style={{ width: '32px', height: '32px', margin: '1.25rem auto 0', display: exportProgress.startsWith('❌') || exportProgress.startsWith('✅') ? 'none' : 'block' }}></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

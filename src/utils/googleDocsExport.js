@@ -5,7 +5,8 @@
  */
 
 const CLIENT_ID = '118402438956-is4oo360jnbcd45u1tttodv83raaiu0p.apps.googleusercontent.com';
-const TEMPLATE_DOC_ID = '1TQ1aly8jb6kbZXny9SjVM7yvr8D03NhubKGVxUFa9fI';
+const TEMPLATE_DOC_ID = '1yFd2LMQh2MggR5_ImHK0M4OAJWGQiNW4g0-dLPnL66A'; // New Contract Template
+const ACCEPTANCE_TEMPLATE_ID = '1WqzkXX-82ac21ZyxKCxeJK2tOy48YfAHXu42D033mos'; // Acceptance Report Template
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
 let accessToken = null;
@@ -53,9 +54,9 @@ function numberToWords(n) {
 }
 
 // ─── Copy template on Drive ──────────────────────────────────────────────────
-async function copyTemplate(token, title) {
+async function copyTemplate(token, title, templateId = TEMPLATE_DOC_ID) {
   const res = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${TEMPLATE_DOC_ID}/copy`,
+    `https://www.googleapis.com/drive/v3/files/${templateId}/copy`,
     {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -227,14 +228,16 @@ export async function exportContractToGoogleDocs({ contract, freelancer, company
     { from: 'Số: 20260420/PHAMDUYCUONG-MAC-HDCTV', to: `Số: ${contract.contractNumber}` },
     { from: 'ngày 20 tháng 04 năm 2026', to: `ngày ${day} tháng ${month} năm ${year}` },
     // Bên B
-    { from: 'PHẠM DUY CƯƠNG\nSinh ngày', to: `${freelancer.fullName}\nSinh ngày` },
+    { from: 'PHẠM DUY CƯƠNG', to: freelancer.fullName },
+    { from: 'PHẠM DUY CƯƠNG', to: freelancer.fullName },
     { from: '08/05/1985', to: fmtDate(freelancer.birthDate) },
     { from: '62 Phạm Thái Bường, Phường Phước Hậu, Tỉnh Vĩnh Long', to: freelancer.address || '' },
-    { from: '0909440585\nMST', to: `${freelancer.phone || ''}\nMST` },
+    { from: '0909440585', to: freelancer.phone || '' },
     { from: '086085006067', to: freelancer.cccd || '' },
-    { from: '11/04/2025 Nơi cấp: CA. Xã Nhà Bè', to: `${fmtDate(freelancer.cccdDate)} Nơi cấp: ${freelancer.cccdPlace || ''}` },
-    { from: 'Phạm Duy Cương\nSố tài khoản', to: `${freelancer.bankAccountName || ''}\nSố tài khoản` },
-    { from: '0909440585\nNgân hàng', to: `${freelancer.bankAccountNumber || ''}\nNgân hàng` },
+    { from: '11/04/2025', to: fmtDate(freelancer.cccdDate) },
+    { from: 'CA. Xã Nhà Bè', to: freelancer.cccdPlace || '' },
+    { from: 'Phạm Duy Cương', to: freelancer.bankAccountName || freelancer.fullName },
+    { from: '0909440585', to: freelancer.bankAccountNumber || freelancer.phone },
     { from: 'Ngân hàng Quân Đội – MBbank', to: freelancer.bankName || '' },
     // Điều 1
     { from: 'Hợp đồng Cộng tác viên (không độc quyền)', to: contract.contractType || 'Hợp đồng Cộng tác viên (không độc quyền)' },
@@ -275,6 +278,58 @@ export async function exportContractToGoogleDocs({ contract, freelancer, company
       await insertImageAtEnd(token, docId, backId, 'CCCD mặt sau');
     }
   }
+
+  const docUrl = `https://docs.google.com/document/d/${docId}/edit`;
+  report('✅ Hoàn tất!');
+  return { docId, docUrl };
+}
+
+// ─── ACCEPTANCE REPORT EXPORT ────────────────────────────────────────────────
+export async function exportAcceptanceReportToGoogleDocs({ report: rpt, contract, freelancer, company, onProgress }) {
+  const report = onProgress || (() => {});
+
+  report('🔐 Đang xác thực Google...');
+  const token = await getGoogleAccessToken();
+
+  const docTitle = `BBNT_${contract.contractNumber || contract.id}`;
+  report('📋 Đang copy template nghiệm thu...');
+  const docId = await copyTemplate(token, docTitle, ACCEPTANCE_TEMPLATE_ID);
+
+  const contractDateParts = (contract.signDate || '').split('-');
+  const reportDateParts = (rpt.reportDate || '').split('-');
+  const day = reportDateParts[2] || '...';
+  const month = reportDateParts[1] || '...';
+  const year = reportDateParts[0] || '...';
+
+  const replacements = [
+    { from: '20251118/PHAMDUYCUONG -MAC-HĐCTV', to: contract.contractNumber },
+    { from: 'ngày  15  tháng  03   năm 2026', to: `ngày ${day} tháng ${month} năm ${year}` },
+    // Bên B
+    { from: 'PHẠM DUY CƯƠNG', to: freelancer.fullName },
+    { from: 'PHẠM DUY CƯƠNG', to: freelancer.fullName },
+    { from: '08/05/1985', to: fmtDate(freelancer.birthDate) },
+    { from: '62 Phạm Thái Bường, Phường Phước Hậu, Tỉnh Vĩnh Long', to: freelancer.address || '' },
+    { from: '086085006067', to: freelancer.cccd || '' },
+    { from: '11/04/2025', to: fmtDate(freelancer.cccdDate) },
+    { from: 'CA. Xã Nhà Bè', to: freelancer.cccdPlace || '' },
+    { from: 'Phạm Duy Cương', to: freelancer.bankAccountName || freelancer.fullName },
+    { from: '0909440585', to: freelancer.bankAccountNumber || freelancer.phone },
+    { from: 'Ngân hàng Quân Đội – MBbank', to: freelancer.bankName || '' },
+    // Nội dung
+    { from: 'Dựng video clip Tiktok', to: contract.jobTitle || 'Dự án' },
+    // Số tiền
+    { from: '21.000.000 VNĐ', to: `${fmtCurrency(rpt.contractValue)} VNĐ` },
+    { from: 'Hai mươi mốt triệu đồng chẵn', to: numberToWords(rpt.contractValue) },
+    { from: '400.000 VNĐ', to: `${fmtCurrency(rpt.additionalValue || 0)} VNĐ` },
+    { from: 'Bốn trăm nghìn đồng chẵn', to: numberToWords(rpt.additionalValue || 0) },
+    { from: '10.500.000 VNĐ', to: `${fmtCurrency(rpt.paidAmount || 0)} VNĐ` },
+    { from: 'Mười triệu năm trăm ngàn đồng chẵn', to: numberToWords(rpt.paidAmount || 0) },
+    { from: '10.900.000 VNĐ', to: `${fmtCurrency(rpt.remainingAmount)} VNĐ` },
+    { from: 'Mười triệu chín trăm nghìn đồng chẵn', to: numberToWords(rpt.remainingAmount) }
+  ];
+
+  report('✏️ Đang điền thông tin biên bản...');
+  await replacePlaceholders(token, docId, replacements);
 
   const docUrl = `https://docs.google.com/document/d/${docId}/edit`;
   report('✅ Hoàn tất!');
