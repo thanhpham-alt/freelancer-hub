@@ -228,8 +228,8 @@ export async function exportContractToGoogleDocs({ contract, freelancer, company
     { from: 'Số: 20260420/PHAMDUYCUONG-MAC-HDCTV', to: `Số: ${contract.contractNumber}` },
     { from: 'ngày 20 tháng 04 năm 2026', to: `ngày ${day} tháng ${month} năm ${year}` },
     // Bên B
-    { from: 'PHẠM DUY CƯƠNG', to: freelancer.fullName },
-    { from: 'PHẠM DUY CƯƠNG', to: freelancer.fullName },
+    { from: 'PHẠM DUY CƯƠNG', to: (freelancer.fullName || '').toUpperCase() },
+    { from: 'PHẠM DUY CƯƠNG', to: (freelancer.fullName || '').toUpperCase() },
     { from: '08/05/1985', to: fmtDate(freelancer.birthDate) },
     { from: '62 Phạm Thái Bường, Phường Phước Hậu, Tỉnh Vĩnh Long', to: freelancer.address || '' },
     { from: '0909440585', to: freelancer.phone || '' },
@@ -305,8 +305,8 @@ export async function exportAcceptanceReportToGoogleDocs({ report: rpt, contract
     { from: '20251118/PHAMDUYCUONG -MAC-HĐCTV', to: contract.contractNumber },
     { from: 'ngày  15  tháng  03   năm 2026', to: `ngày ${day} tháng ${month} năm ${year}` },
     // Bên B
-    { from: 'PHẠM DUY CƯƠNG', to: freelancer.fullName },
-    { from: 'PHẠM DUY CƯƠNG', to: freelancer.fullName },
+    { from: 'PHẠM DUY CƯƠNG', to: (freelancer.fullName || '').toUpperCase() },
+    { from: 'PHẠM DUY CƯƠNG', to: (freelancer.fullName || '').toUpperCase() },
     { from: '08/05/1985', to: fmtDate(freelancer.birthDate) },
     { from: '62 Phạm Thái Bường, Phường Phước Hậu, Tỉnh Vĩnh Long', to: freelancer.address || '' },
     { from: '086085006067', to: freelancer.cccd || '' },
