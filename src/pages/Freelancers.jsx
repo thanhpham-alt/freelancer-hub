@@ -6,6 +6,7 @@ import { AppIcon, Modal, ConfirmDialog } from '../components';
 import { parseTextWithAI } from '../utils/aiParser';
 import { compressImage } from '../utils/imageCompressor';
 import { safeArray } from '../utils/dataGuards';
+import { normalizeDate, normalizeFreelancerImport } from '../utils/importNormalizer';
 
 export default function Freelancers() {
   const { showToast } = useToast();
@@ -29,6 +30,7 @@ export default function Freelancers() {
   const [parsedFreelancers, setParsedFreelancers] = useState([]);
   const [importSelections, setImportSelections] = useState({});
   const [activeImportIdx, setActiveImportIdx] = useState(0);
+  const [importSource, setImportSource] = useState('AI');
 
   // AI Import State
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -104,7 +106,9 @@ export default function Freelancers() {
 
 
   const handleConfirmImport = async () => {
-    const toImport = parsedFreelancers.filter((_, idx) => importSelections[idx]);
+    const toImport = parsedFreelancers
+      .filter((_, idx) => importSelections[idx])
+      .map(normalizeFreelancerImport);
     if (toImport.length === 0) {
       showToast('Vui lòng chọn ít nhất 1 freelancer để import.', 'warning');
       return;
@@ -125,8 +129,8 @@ export default function Freelancers() {
       setIsImportModalOpen(false);
       loadFreelancers();
     } catch (err) {
-      console.error('Failed to import freelancers from AI', err);
-      showToast(err.message || 'Có lỗi xảy ra khi lưu freelancer từ AI.', 'error');
+      console.error('Failed to import freelancers', err);
+      showToast(err.message || 'Có lỗi xảy ra khi lưu freelancer. Vui lòng kiểm tra dữ liệu và thử lại.', 'error');
     }
   };
 
@@ -150,14 +154,16 @@ export default function Freelancers() {
         return;
       }
 
-      setParsedFreelancers(results);
+      const normalizedResults = results.map(normalizeFreelancerImport);
+      setParsedFreelancers(normalizedResults);
       const selections = {};
-      results.forEach((_, idx) => { selections[idx] = true; });
+      normalizedResults.forEach((_, idx) => { selections[idx] = true; });
       setImportSelections(selections);
       setActiveImportIdx(0);
+      setImportSource('AI');
       setIsAiModalOpen(false);
       setIsImportModalOpen(true);
-      showToast(`Đã nhận diện được ${results.length} freelancer từ AI!`, 'success');
+      showToast(`Đã nhận diện được ${normalizedResults.length} freelancer từ AI!`, 'success');
       setAiText('');
     } catch (err) {
       console.error('Failed to parse freelancers with AI', err);
@@ -177,7 +183,8 @@ export default function Freelancers() {
   const handleParsedFieldChange = async (idx, field, value) => {
     setParsedFreelancers(prev => {
       const copy = [...prev];
-      copy[idx] = { ...copy[idx], [field]: value };
+      const normalizedValue = ['birthDate', 'cccdDate'].includes(field) ? normalizeDate(value) : value;
+      copy[idx] = { ...copy[idx], [field]: normalizedValue };
       
       // Auto-fill bank account name if full name changes
       if (field === 'fullName' && !copy[idx].bankAccountName) {
@@ -692,7 +699,7 @@ export default function Freelancers() {
       <Modal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        title={`Import Freelancer từ file DOCX (${parsedFreelancers.length} được tìm thấy)`}
+        title={`Import Freelancer từ ${importSource} (${parsedFreelancers.length} được tìm thấy)`}
         size="xl"
         footer={
           <>

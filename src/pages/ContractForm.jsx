@@ -5,6 +5,7 @@ import { getCompanyInfo } from '../data/companyInfo';
 import { generateContractNumber, numberToVietnameseWords } from '../utils/formatters';
 import { calculateItemsTotal, calculateTax, calculateNetAmount } from '../utils/calculations';
 import { parseContractWithAI } from '../utils/aiParser';
+import { normalizeContractImport } from '../utils/importNormalizer';
 import { useToast } from '../components/Toast';
 import { AppIcon, Modal } from '../components';
 
@@ -252,19 +253,22 @@ export default function ContractForm() {
   };
 
   const handleSave = async (status) => {
+    const normalizedContract = normalizeContractImport(formData);
+    const normalizedPhases = normalizeContractImport({ paymentPhases }).paymentPhases;
+
     // Validation
-    if (!formData.freelancerId) {
+    if (!normalizedContract.freelancerId) {
       showToast('Vui lòng tạo và chọn Freelancer trước khi lưu hợp đồng.', 'warning');
       return;
     }
 
-    if (!formData.contractNumber || !formData.jobTitle || !formData.startDate || !formData.endDate) {
+    if (!normalizedContract.contractNumber || !normalizedContract.jobTitle || !normalizedContract.startDate || !normalizedContract.endDate) {
       showToast('Vui lòng nhập đầy đủ thông tin bắt buộc (*)', 'warning');
       return;
     }
 
     // Verify percentages sum to 100%
-    const totalPercentage = paymentPhases.reduce((sum, p) => sum + (Number(p.percentage) || 0), 0);
+    const totalPercentage = normalizedPhases.reduce((sum, p) => sum + (Number(p.percentage) || 0), 0);
     if (totalPercentage !== 100) {
       showToast(`Tổng tỷ lệ các đợt thanh toán phải bằng 100% (Hiện tại là ${totalPercentage}%)`, 'warning');
       return;
@@ -272,7 +276,7 @@ export default function ContractForm() {
 
     try {
       const finalContract = {
-        ...formData,
+        ...normalizedContract,
         status: status
       };
 
@@ -285,7 +289,7 @@ export default function ContractForm() {
         await Promise.all(oldPhases.map(op => deletePaymentSchedule(op.id)));
       }
 
-      await Promise.all(paymentPhases.map(p => savePaymentSchedule({
+      await Promise.all(normalizedPhases.map(p => savePaymentSchedule({
         contractId: saved.id,
         phase: p.phase,
         percentage: Number(p.percentage),
@@ -322,12 +326,12 @@ export default function ContractForm() {
     const today = new Date().toISOString().split('T')[0];
 
     try {
-      const parsed = await parseContractWithAI({
+      const parsed = normalizeContractImport(await parseContractWithAI({
         text: aiContractText,
         apiKey: key,
         freelancers,
         today
-      });
+      }), today);
 
       // Apply parsed data to formData
       setFormData(prev => ({
