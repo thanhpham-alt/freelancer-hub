@@ -1,13 +1,14 @@
 import { NavLink } from 'react-router-dom';
+import AppIcon from './AppIcon';
 
 const navItems = [
-  { path: '/', icon: '📊', label: 'Tổng quan' },
-  { path: '/freelancers', icon: '👤', label: 'Freelancers' },
-  { path: '/jobs', icon: '💼', label: 'Dự án' },
-  { path: '/contracts', icon: '📄', label: 'Hợp đồng' },
-  { path: '/acceptance-reports', icon: '📋', label: 'Nghiệm thu' },
-  { path: '/payments', icon: '💰', label: 'Thanh toán' },
-  { path: '/settings', icon: '⚙️', label: 'Cài đặt' },
+  { path: '/', icon: 'gauge', label: 'Tổng quan' },
+  { path: '/freelancers', icon: 'users', label: 'Freelancers' },
+  { path: '/jobs', icon: 'briefcase', label: 'Dự án' },
+  { path: '/contracts', icon: 'file', label: 'Hợp đồng' },
+  { path: '/acceptance-reports', icon: 'fileCheck', label: 'Nghiệm thu' },
+  { path: '/payments', icon: 'dollar', label: 'Thanh toán' },
+  { path: '/settings', icon: 'settings', label: 'Cài đặt' },
 ];
 
 export default function Sidebar({ isOpen, onToggle }) {
@@ -15,7 +16,7 @@ export default function Sidebar({ isOpen, onToggle }) {
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-logo">
         <h2>
-          <span className="nav-icon">🏢</span>
+          <span className="nav-icon"><AppIcon name="building" size={21} /></span>
           <span>Freelancer Hub</span>
         </h2>
         <p>Quản lý CTV & Thanh toán</p>
@@ -34,7 +35,7 @@ export default function Sidebar({ isOpen, onToggle }) {
               }
             }}
           >
-            <span className="nav-icon">{item.icon}</span>
+            <span className="nav-icon"><AppIcon name={item.icon} size={19} /></span>
             <span className="nav-label">{item.label}</span>
           </NavLink>
         ))}

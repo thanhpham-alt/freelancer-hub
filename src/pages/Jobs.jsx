@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { getJobs, saveJob, deleteJob, getFreelancers } from '../data/store';
 import { formatDate } from '../utils/formatters';
 import { useToast } from '../components/Toast';
-import { Modal, ConfirmDialog, StatusBadge } from '../components';
+import { AppIcon, Modal, ConfirmDialog, StatusBadge } from '../components';
+import { safeArray } from '../utils/dataGuards';
 
 export default function Jobs() {
   const { showToast } = useToast();
@@ -24,15 +25,15 @@ export default function Jobs() {
 
   const loadData = async () => {
     const [jobs, freelancers] = await Promise.all([getJobs(), getFreelancers()]);
-    setJobs(jobs);
-    setFreelancers(freelancers);
+    setJobs(safeArray(jobs));
+    setFreelancers(safeArray(freelancers));
   };
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const filteredJobs = jobs.filter(j => {
+  const filteredJobs = safeArray(jobs).filter(j => {
     if (statusFilter === 'all') return true;
     return j.status === statusFilter;
   });
@@ -115,7 +116,7 @@ export default function Jobs() {
         <h1 className="page-title">Quản lý Dự án (Jobs)</h1>
         <div className="header-actions">
           <button className="btn btn-primary" onClick={openAddModal}>
-            <span>➕</span> Thêm Dự Án
+            <AppIcon name="plus" size={17} /> Thêm Dự Án
           </button>
         </div>
       </div>
@@ -156,7 +157,7 @@ export default function Jobs() {
       <div className="card">
         {filteredJobs.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">💼</div>
+            <div className="empty-icon"><AppIcon name="briefcase" size={44} /></div>
             <p>Không tìm thấy dự án nào.</p>
           </div>
         ) : (

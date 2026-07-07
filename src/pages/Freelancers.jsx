@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { getFreelancers, saveFreelancer, deleteFreelancer } from '../data/store';
 import { formatDate } from '../utils/formatters';
 import { useToast } from '../components/Toast';
-import { Modal, ConfirmDialog } from '../components';
+import { AppIcon, Modal, ConfirmDialog } from '../components';
 import { parseTextWithAI } from '../utils/aiParser';
 import { compressImage } from '../utils/imageCompressor';
+import { safeArray } from '../utils/dataGuards';
 
 export default function Freelancers() {
   const { showToast } = useToast();
@@ -17,10 +18,10 @@ export default function Freelancers() {
   const [roleFilter, setRoleFilter] = useState('all');
 
   const ROLES = {
-    coder: { label: '💻 Coder', color: '#8b5cf6' },
-    voice_off: { label: '🎙️ Voice off', color: '#ec4899' },
-    camop: { label: '🎥 Camop', color: '#06b6d4' },
-    other: { label: '⚙️ Khác', color: '#64748b' }
+    coder: { label: 'Coder', icon: 'code', color: '#7c3aed' },
+    voice_off: { label: 'Voice off', icon: 'mic', color: '#db2777' },
+    camop: { label: 'Camop', icon: 'camera', color: '#0891b2' },
+    other: { label: 'Khác', icon: 'sparkles', color: '#64748b' }
   };
   
   // Import DOCX State
@@ -56,16 +57,19 @@ export default function Freelancers() {
   });
 
   const loadFreelancers = async () => {
-    const list = getFreelancers();
-    setFreelancers(list);
-    setSelectedIds(prev => prev.filter(id => list.some(f => f.id === id)));
+    const list = await getFreelancers();
+    const safeList = safeArray(list);
+    setFreelancers(safeList);
+    setSelectedIds(prev => prev.filter(id => safeList.some(f => f.id === id)));
   };
 
   useEffect(() => {
     loadFreelancers();
   }, []);
 
-  const filteredFreelancers = freelancers.filter(f => {
+  const safeFreelancers = safeArray(freelancers);
+
+  const filteredFreelancers = safeFreelancers.filter(f => {
     if (roleFilter === 'all') return true;
     return (f.role || 'other') === roleFilter;
   });
@@ -311,15 +315,15 @@ export default function Freelancers() {
         <div className="header-actions">
           {selectedIds.length > 0 && (
             <button className="btn btn-danger" onClick={() => setIsBulkConfirmOpen(true)} style={{ marginRight: '0.75rem' }}>
-              <span>🗑️</span> Xóa đã chọn ({selectedIds.length})
+              <AppIcon name="trash" size={17} /> Xóa đã chọn ({selectedIds.length})
             </button>
           )}
 
           <button className="btn btn-secondary" onClick={() => setIsAiModalOpen(true)} style={{ marginRight: '0.75rem' }}>
-            <span>🤖</span> Nhập bằng AI
+            <AppIcon name="bot" size={17} /> Nhập bằng AI
           </button>
           <button className="btn btn-primary" onClick={openAddModal}>
-            <span>➕</span> Thêm Freelancer
+            <AppIcon name="plus" size={17} /> Thêm Freelancer
           </button>
         </div>
       </div>
@@ -337,6 +341,7 @@ export default function Freelancers() {
             className={`filter-chip ${roleFilter === key ? 'active' : ''}`}
             onClick={() => setRoleFilter(key)}
           >
+            <AppIcon name={value.icon} size={14} />
             {value.label}
           </button>
         ))}
@@ -345,7 +350,7 @@ export default function Freelancers() {
       <div className="card">
         {filteredFreelancers.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">👤</div>
+            <div className="empty-icon"><AppIcon name="user" size={44} /></div>
             <p>Chưa có freelancer nào. Hãy thêm freelancer đầu tiên!</p>
           </div>
         ) : (
@@ -392,8 +397,12 @@ export default function Freelancers() {
                         fontWeight: '600',
                         backgroundColor: `${ROLES[f.role || 'other']?.color}15`, 
                         color: ROLES[f.role || 'other']?.color,
-                        border: `1px solid ${ROLES[f.role || 'other']?.color}30`
+                        border: `1px solid ${ROLES[f.role || 'other']?.color}30`,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem'
                       }}>
+                        <AppIcon name={ROLES[f.role || 'other']?.icon} size={14} />
                         {ROLES[f.role || 'other']?.label}
                       </span>
                     </td>
@@ -457,10 +466,10 @@ export default function Freelancers() {
                 value={formData.role || 'other'}
                 onChange={handleInputChange}
               >
-                <option value="coder">💻 Coder</option>
-                <option value="voice_off">🎙️ Voice off</option>
-                <option value="camop">🎥 Camop</option>
-                <option value="other">⚙️ Khác</option>
+                <option value="coder">Coder</option>
+                <option value="voice_off">Voice off</option>
+                <option value="camop">Camop</option>
+                <option value="other">Khác</option>
               </select>
             </div>
             <div className="form-group" style={{ flex: 1 }}>
@@ -734,14 +743,16 @@ export default function Freelancers() {
                         gap: '0.25rem'
                       }}>
                         {f.fullName || '(Chưa có tên)'}
-                        <span>{ROLES[f.role || 'other']?.label.split(' ')[0]}</span>
+                        <AppIcon name={ROLES[f.role || 'other']?.icon} size={14} />
                       </div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                         {f.phone || 'Chưa có SĐT'}
                       </div>
                     </div>
                     {isInvalid && (
-                      <span title="Thiếu thông tin bắt buộc" style={{ color: 'var(--danger)', marginLeft: '0.5rem' }}>⚠️</span>
+                      <span title="Thiếu thông tin bắt buộc" style={{ color: 'var(--danger)', marginLeft: '0.5rem' }}>
+                        <AppIcon name="alert" size={16} />
+                      </span>
                     )}
                   </div>
                 );
@@ -778,10 +789,10 @@ export default function Freelancers() {
                       value={parsedFreelancers[activeImportIdx].role || 'other'}
                       onChange={(e) => handleParsedFieldChange(activeImportIdx, 'role', e.target.value)}
                     >
-                      <option value="coder">💻 Coder</option>
-                      <option value="voice_off">🎙️ Voice off</option>
-                      <option value="camop">🎥 Camop</option>
-                      <option value="other">⚙️ Khác</option>
+                      <option value="coder">Coder</option>
+                      <option value="voice_off">Voice off</option>
+                      <option value="camop">Camop</option>
+                      <option value="other">Khác</option>
                     </select>
                   </div>
                   <div className="form-group" style={{ flex: 1 }}>

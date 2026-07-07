@@ -1,0 +1,66 @@
+import {
+  AlertTriangle,
+  Banknote,
+  Bot,
+  BriefcaseBusiness,
+  Building2,
+  Camera,
+  Check,
+  CircleDollarSign,
+  Clock3,
+  Code2,
+  FileCheck2,
+  FileText,
+  Gauge,
+  ExternalLink,
+  Info,
+  LoaderCircle,
+  Mic2,
+  Pencil,
+  PenLine,
+  Plus,
+  Printer,
+  Save,
+  Settings,
+  Sparkles,
+  Trash2,
+  UserRound,
+  UsersRound,
+  WandSparkles
+} from 'lucide-react';
+
+const ICONS = {
+  alert: AlertTriangle,
+  banknote: Banknote,
+  bot: Bot,
+  briefcase: BriefcaseBusiness,
+  building: Building2,
+  camera: Camera,
+  check: Check,
+  code: Code2,
+  dollar: CircleDollarSign,
+  file: FileText,
+  fileCheck: FileCheck2,
+  external: ExternalLink,
+  gauge: Gauge,
+  info: Info,
+  loader: LoaderCircle,
+  mic: Mic2,
+  pencil: Pencil,
+  pen: PenLine,
+  plus: Plus,
+  printer: Printer,
+  save: Save,
+  settings: Settings,
+  sparkles: Sparkles,
+  trash: Trash2,
+  user: UserRound,
+  users: UsersRound,
+  wand: WandSparkles,
+  clock: Clock3
+};
+
+export default function AppIcon({ name, size = 18, strokeWidth = 2, className = '', ...props }) {
+  const Icon = ICONS[name] || Sparkles;
+  return <Icon aria-hidden="true" className={className} size={size} strokeWidth={strokeWidth} {...props} />;
+}

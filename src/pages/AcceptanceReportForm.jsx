@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { getContracts, getFreelancers, getJobs, getAcceptanceReportById, saveAcceptanceReport, getPaymentSchedulesByContract } from '../data/store';
 import { calculateItemsTotal, calculateTax, calculateNetAmount } from '../utils/calculations';
 import { useToast } from '../components/Toast';
+import { AppIcon } from '../components';
 
 export default function AcceptanceReportForm() {
   const navigate = useNavigate();
@@ -187,10 +188,10 @@ export default function AcceptanceReportForm() {
             Hủy bỏ
           </button>
           <button className="btn btn-secondary btn-sm" onClick={() => handleSave('draft')}>
-            💾 Lưu bản nháp
+            <AppIcon name="save" size={16} /> Lưu bản nháp
           </button>
           <button className="btn btn-primary btn-sm" onClick={() => handleSave('signed')}>
-            ✍️ Lưu & Ký biên bản
+            <AppIcon name="pen" size={16} /> Lưu & Ký biên bản
           </button>
         </div>
       </div>
@@ -245,7 +246,7 @@ export default function AcceptanceReportForm() {
         <div className="card-title">
           <span>2. Chi tiết hạng mục nghiệm thu</span>
           <button type="button" className="btn btn-secondary btn-sm" onClick={addAdditionalRow}>
-            ➕ Thêm hạng mục phát sinh
+            <AppIcon name="plus" size={16} /> Thêm hạng mục phát sinh
           </button>
         </div>
 
@@ -383,10 +384,10 @@ export default function AcceptanceReportForm() {
           Hủy bỏ
         </button>
         <button className="btn btn-secondary" onClick={() => handleSave('draft')}>
-          💾 Lưu bản nháp
+          <AppIcon name="save" size={16} /> Lưu bản nháp
         </button>
         <button className="btn btn-primary" onClick={() => handleSave('signed')}>
-          ✍️ Lưu & Ký biên bản
+          <AppIcon name="pen" size={16} /> Lưu & Ký biên bản
         </button>
       </div>
     </div>

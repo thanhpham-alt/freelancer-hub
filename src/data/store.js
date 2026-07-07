@@ -1,5 +1,5 @@
 import { db } from '../firebase';
-import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, updateDoc, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, updateDoc, query, where } from 'firebase/firestore';
 
 // We will use standard async operations.
 const COLL = {
@@ -10,14 +10,45 @@ const COLL = {
   paymentSchedules: 'paymentSchedules'
 };
 
+const DEFAULT_DASHBOARD_STATS = {
+  totalFreelancers: 0,
+  activeJobs: 0,
+  activeContracts: 0,
+  pendingPayments: 0,
+  overduePayments: 0,
+  totalPaidAmount: 0,
+  upcomingPayments: [],
+  recentContracts: [],
+  recentJobs: []
+};
+
 function generateId() {
   return crypto.randomUUID();
 }
 
+async function getCollectionRows(collectionName) {
+  try {
+    const snapshot = await getDocs(collection(db, collectionName));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (err) {
+    console.error(`Failed to load ${collectionName}`, err);
+    return [];
+  }
+}
+
+async function getQueryRows(collectionQuery, label) {
+  try {
+    const snapshot = await getDocs(collectionQuery);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (err) {
+    console.error(`Failed to load ${label}`, err);
+    return [];
+  }
+}
+
 // ========== Freelancers ==========
 export async function getFreelancers() {
-  const snapshot = await getDocs(collection(db, COLL.freelancers));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return getCollectionRows(COLL.freelancers);
 }
 
 export async function getFreelancerById(id) {
@@ -40,8 +71,7 @@ export async function deleteFreelancer(id) {
 
 // ========== Jobs ==========
 export async function getJobs() {
-  const snapshot = await getDocs(collection(db, COLL.jobs));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return getCollectionRows(COLL.jobs);
 }
 
 export async function getJobById(id) {
@@ -64,14 +94,12 @@ export async function deleteJob(id) {
 
 export async function getJobsByFreelancer(freelancerId) {
   const q = query(collection(db, COLL.jobs), where("freelancerId", "==", freelancerId));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return getQueryRows(q, 'jobs by freelancer');
 }
 
 // ========== Contracts ==========
 export async function getContracts() {
-  const snapshot = await getDocs(collection(db, COLL.contracts));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return getCollectionRows(COLL.contracts);
 }
 
 export async function getContractById(id) {
@@ -94,14 +122,12 @@ export async function deleteContract(id) {
 
 export async function getContractsByFreelancer(freelancerId) {
   const q = query(collection(db, COLL.contracts), where("freelancerId", "==", freelancerId));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return getQueryRows(q, 'contracts by freelancer');
 }
 
 // ========== Acceptance Reports ==========
 export async function getAcceptanceReports() {
-  const snapshot = await getDocs(collection(db, COLL.acceptanceReports));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return getCollectionRows(COLL.acceptanceReports);
 }
 
 export async function getAcceptanceReportById(id) {
@@ -124,8 +150,7 @@ export async function deleteAcceptanceReport(id) {
 
 // ========== Payment Schedules ==========
 export async function getPaymentSchedules() {
-  const snapshot = await getDocs(collection(db, COLL.paymentSchedules));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return getCollectionRows(COLL.paymentSchedules);
 }
 
 export async function getPaymentScheduleById(id) {
@@ -148,14 +173,12 @@ export async function deletePaymentSchedule(id) {
 
 export async function getPaymentSchedulesByContract(contractId) {
   const q = query(collection(db, COLL.paymentSchedules), where("contractId", "==", contractId));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return getQueryRows(q, 'payment schedules by contract');
 }
 
 export async function updatePaymentStatus(id, status, paidDate = null) {
   const snap = await getDoc(doc(db, COLL.paymentSchedules, id));
   if (snap.exists()) {
-    const data = snap.data();
     await updateDoc(doc(db, COLL.paymentSchedules, id), {
       status,
       paidDate: status === 'paid' ? (paidDate || new Date().toISOString().split('T')[0]) : null,
@@ -166,65 +189,65 @@ export async function updatePaymentStatus(id, status, paidDate = null) {
 
 // ========== Dashboard Stats ==========
 export async function getDashboardStats() {
-  const [fSnap, jSnap, cSnap, pSnap] = await Promise.all([
-    getDocs(collection(db, COLL.freelancers)),
-    getDocs(collection(db, COLL.jobs)),
-    getDocs(collection(db, COLL.contracts)),
-    getDocs(collection(db, COLL.paymentSchedules)),
-  ]);
-  
-  const freelancers = fSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const jobs = jSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const contracts = cSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-  const payments = pSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  try {
+    const [freelancers, jobs, contracts, payments] = await Promise.all([
+      getFreelancers(),
+      getJobs(),
+      getContracts(),
+      getPaymentSchedules(),
+    ]);
 
-  const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
 
-  const updatedPayments = payments.map(p => {
-    if (p.status === 'pending' && p.dueDate && p.dueDate < today) {
-      updateDoc(doc(db, COLL.paymentSchedules, p.id), { status: 'overdue' }); // fire and forget
-      return { ...p, status: 'overdue' };
-    }
-    return p;
-  });
+    const updatedPayments = payments.map(p => {
+      if (p.status === 'pending' && p.dueDate && p.dueDate < today) {
+        updateDoc(doc(db, COLL.paymentSchedules, p.id), { status: 'overdue' }); // fire and forget
+        return { ...p, status: 'overdue' };
+      }
+      return p;
+    });
 
-  const activePayments = updatedPayments;
-  const pendingPayments = activePayments.filter(p => p.status === 'pending');
-  const overduePayments = activePayments.filter(p => p.status === 'overdue');
-  const paidPayments = activePayments.filter(p => p.status === 'paid');
+    const activePayments = updatedPayments;
+    const pendingPayments = activePayments.filter(p => p.status === 'pending');
+    const overduePayments = activePayments.filter(p => p.status === 'overdue');
+    const paidPayments = activePayments.filter(p => p.status === 'paid');
 
-  return {
-    totalFreelancers: freelancers.length,
-    activeJobs: jobs.filter(j => j.status === 'in_progress').length,
-    activeContracts: contracts.filter(c => c.status === 'signed').length,
-    pendingPayments: pendingPayments.length + overduePayments.length,
-    overduePayments: overduePayments.length,
-    totalPaidAmount: paidPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0),
-    upcomingPayments: [...pendingPayments, ...overduePayments]
-      .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''))
-      .slice(0, 5)
-      .map(p => {
-        const contract = contracts.find(c => c.id === p.contractId);
-        const freelancer = contract ? freelancers.find(f => f.id === contract.freelancerId) : null;
-        const job = contract ? jobs.find(j => j.id === contract.jobId) : null;
-        return { ...p, contract, freelancer, job };
-      }),
-    recentContracts: contracts
-      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
-      .slice(0, 5)
-      .map(c => {
-        const freelancer = freelancers.find(f => f.id === c.freelancerId);
-        const job = jobs.find(j => j.id === c.jobId);
-        return { ...c, freelancer, job };
-      }),
-    recentJobs: jobs
-      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
-      .slice(0, 5)
-      .map(j => {
-        const freelancer = freelancers.find(f => f.id === j.freelancerId);
-        return { ...j, freelancer };
-      })
-  };
+    return {
+      totalFreelancers: freelancers.length,
+      activeJobs: jobs.filter(j => j.status === 'in_progress').length,
+      activeContracts: contracts.filter(c => c.status === 'signed').length,
+      pendingPayments: pendingPayments.length + overduePayments.length,
+      overduePayments: overduePayments.length,
+      totalPaidAmount: paidPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0),
+      upcomingPayments: [...pendingPayments, ...overduePayments]
+        .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''))
+        .slice(0, 5)
+        .map(p => {
+          const contract = contracts.find(c => c.id === p.contractId);
+          const freelancer = contract ? freelancers.find(f => f.id === contract.freelancerId) : null;
+          const job = contract ? jobs.find(j => j.id === contract.jobId) : null;
+          return { ...p, contract, freelancer, job };
+        }),
+      recentContracts: contracts
+        .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+        .slice(0, 5)
+        .map(c => {
+          const freelancer = freelancers.find(f => f.id === c.freelancerId);
+          const job = jobs.find(j => j.id === c.jobId);
+          return { ...c, freelancer, job };
+        }),
+      recentJobs: jobs
+        .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+        .slice(0, 5)
+        .map(j => {
+          const freelancer = freelancers.find(f => f.id === j.freelancerId);
+          return { ...j, freelancer };
+        })
+    };
+  } catch (err) {
+    console.error('Failed to load dashboard stats', err);
+    return DEFAULT_DASHBOARD_STATS;
+  }
 }
 
 export async function exportAllData() {

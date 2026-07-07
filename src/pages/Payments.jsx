@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { getPaymentSchedules, getContracts, getFreelancers, updatePaymentStatus } from '../data/store';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import { useToast } from '../components/Toast';
-import { StatusBadge } from '../components';
+import { AppIcon, StatusBadge } from '../components';
+import { safeArray } from '../utils/dataGuards';
 
 export default function Payments() {
   const { showToast } = useToast();
@@ -12,9 +13,15 @@ export default function Payments() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   const loadData = async () => {
-    setSchedules(getPaymentSchedules());
-    getContracts().then(setContracts);
-    getFreelancers().then(setFreelancers);
+    const [paymentSchedules, contractsData, freelancersData] = await Promise.all([
+      getPaymentSchedules(),
+      getContracts(),
+      getFreelancers()
+    ]);
+
+    setSchedules(safeArray(paymentSchedules));
+    setContracts(safeArray(contractsData));
+    setFreelancers(safeArray(freelancersData));
   };
 
   useEffect(() => {
@@ -42,16 +49,18 @@ export default function Payments() {
     }
   };
 
-  const filteredSchedules = schedules.filter(p => {
+  const safeSchedules = safeArray(schedules);
+
+  const filteredSchedules = safeSchedules.filter(p => {
     if (statusFilter === 'all') return true;
     return p.status === statusFilter;
   });
 
   // Calculate summary metrics
-  const totalAmount = schedules.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  const paidAmount = schedules.filter(p => p.status === 'paid').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  const pendingAmount = schedules.filter(p => p.status === 'pending' || p.status === 'overdue').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-  const overdueAmount = schedules.filter(p => p.status === 'overdue').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const totalAmount = safeSchedules.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const paidAmount = safeSchedules.filter(p => p.status === 'paid').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const pendingAmount = safeSchedules.filter(p => p.status === 'pending' || p.status === 'overdue').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  const overdueAmount = safeSchedules.filter(p => p.status === 'overdue').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
   return (
     <div>
@@ -61,21 +70,21 @@ export default function Payments() {
 
       <div className="stat-grid">
         <div className="stat-card stat-card-indigo">
-          <div className="stat-icon">💰</div>
+          <div className="stat-icon"><AppIcon name="dollar" size={23} /></div>
           <div className="stat-info">
             <div className="stat-value">{formatCurrency(totalAmount)}đ</div>
             <div className="stat-label">Tổng phải trả</div>
           </div>
         </div>
         <div className="stat-card stat-card-emerald">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon"><AppIcon name="check" size={23} /></div>
           <div className="stat-info">
             <div className="stat-value">{formatCurrency(paidAmount)}đ</div>
             <div className="stat-label">Đã thanh toán</div>
           </div>
         </div>
         <div className="stat-card stat-card-amber">
-          <div className="stat-icon">🕒</div>
+          <div className="stat-icon"><AppIcon name="clock" size={23} /></div>
           <div className="stat-info">
             <div className="stat-value">{formatCurrency(pendingAmount)}đ</div>
             <div className="stat-label">Còn lại cần trả</div>
@@ -113,7 +122,7 @@ export default function Payments() {
       <div className="card">
         {filteredSchedules.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">💸</div>
+            <div className="empty-icon"><AppIcon name="banknote" size={44} /></div>
             <p>Không có đợt thanh toán nào phù hợp.</p>
           </div>
         ) : (

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAcceptanceReports, getContracts, getFreelancers, getJobs, deleteAcceptanceReport } from '../data/store';
 import { formatCurrency, formatDate } from '../utils/formatters';
-import { StatusBadge, ConfirmDialog, useToast } from '../components';
+import { AppIcon, StatusBadge, ConfirmDialog, useToast } from '../components';
+import { safeArray } from '../utils/dataGuards';
 
 export default function AcceptanceReports() {
   const navigate = useNavigate();
@@ -21,10 +22,10 @@ export default function AcceptanceReports() {
       getFreelancers(),
       getJobs()
     ]);
-    setReports(reports);
-    setContracts(contracts);
-    setFreelancers(freelancers);
-    setJobs(jobs);
+    setReports(safeArray(reports));
+    setContracts(safeArray(contracts));
+    setFreelancers(safeArray(freelancers));
+    setJobs(safeArray(jobs));
   };
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export default function AcceptanceReports() {
         <h1 className="page-title">Biên bản nghiệm thu & Thanh lý</h1>
         <div className="header-actions">
           <button className="btn btn-primary" onClick={() => navigate('/acceptance-reports/new')}>
-            <span>➕</span> Tạo Biên Bản Nghiệm Thu
+            <AppIcon name="plus" size={17} /> Tạo Biên Bản Nghiệm Thu
           </button>
         </div>
       </div>
@@ -75,7 +76,7 @@ export default function AcceptanceReports() {
       <div className="card">
         {reports.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">📋</div>
+            <div className="empty-icon"><AppIcon name="fileCheck" size={44} /></div>
             <p>Chưa có biên bản nghiệm thu nào.</p>
           </div>
         ) : (
@@ -118,7 +119,7 @@ export default function AcceptanceReports() {
                           onClick={(e) => handleDeleteClick(e, r.id)}
                           title="Xóa biên bản nghiệm thu"
                         >
-                          🗑️
+                          <AppIcon name="trash" size={16} />
                         </button>
                       </td>
                     </tr>

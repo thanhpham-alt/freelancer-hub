@@ -2,25 +2,37 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDashboardStats } from '../data/store';
 import { formatCurrency, formatDate } from '../utils/formatters';
-import { StatCard, StatusBadge } from '../components';
+import { AppIcon, StatCard, StatusBadge } from '../components';
+import { safeArray, safeObject } from '../utils/dataGuards';
+
+const DEFAULT_STATS = {
+  totalFreelancers: 0,
+  activeJobs: 0,
+  activeContracts: 0,
+  pendingPayments: 0,
+  overduePayments: 0,
+  totalPaidAmount: 0,
+  upcomingPayments: [],
+  recentContracts: [],
+  recentJobs: []
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    totalFreelancers: 0,
-    activeJobs: 0,
-    activeContracts: 0,
-    pendingPayments: 0,
-    overduePayments: 0,
-    totalPaidAmount: 0,
-    upcomingPayments: [],
-    recentContracts: [],
-    recentJobs: []
-  });
+  const [stats, setStats] = useState(DEFAULT_STATS);
 
   useEffect(() => {
-    getDashboardStats().then(setStats);
+    getDashboardStats()
+      .then(data => setStats({ ...DEFAULT_STATS, ...safeObject(data) }))
+      .catch(err => {
+        console.error(err);
+        setStats(DEFAULT_STATS);
+      });
   }, []);
+
+  const upcomingPayments = safeArray(stats.upcomingPayments);
+  const recentContracts = safeArray(stats.recentContracts);
+  const recentJobs = safeArray(stats.recentJobs);
 
   return (
     <div>
@@ -30,28 +42,28 @@ export default function Dashboard() {
 
       <div className="stat-grid">
         <StatCard
-          icon="👤"
+          icon={<AppIcon name="users" size={23} />}
           label="Tổng Freelancer"
           value={stats.totalFreelancers}
           variant="indigo"
           onClick={() => navigate('/freelancers')}
         />
         <StatCard
-          icon="💼"
+          icon={<AppIcon name="briefcase" size={23} />}
           label="Dự án đang làm"
           value={stats.activeJobs}
           variant="emerald"
           onClick={() => navigate('/jobs')}
         />
         <StatCard
-          icon="📄"
+          icon={<AppIcon name="file" size={23} />}
           label="Hợp đồng đang ký"
           value={stats.activeContracts}
           variant="amber"
           onClick={() => navigate('/contracts')}
         />
         <StatCard
-          icon="💰"
+          icon={<AppIcon name="dollar" size={23} />}
           label="Thanh toán cần TT"
           value={stats.pendingPayments}
           variant="rose"
@@ -67,9 +79,9 @@ export default function Dashboard() {
           </button>
         </div>
         
-        {stats.upcomingPayments.length === 0 ? (
+        {upcomingPayments.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">🎉</div>
+            <div className="empty-icon"><AppIcon name="sparkles" size={44} /></div>
             <p>Không có thanh toán nào sắp đến hạn!</p>
           </div>
         ) : (
@@ -85,7 +97,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {stats.upcomingPayments.map(p => (
+                {upcomingPayments.map(p => (
                   <tr 
                     key={p.id} 
                     onClick={() => navigate('/payments')}
@@ -120,7 +132,7 @@ export default function Dashboard() {
               Xem tất cả
             </button>
           </div>
-          {stats.recentContracts.length === 0 ? (
+          {recentContracts.length === 0 ? (
             <div className="empty-state">
               <p>Chưa có hợp đồng nào.</p>
             </div>
@@ -135,7 +147,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {stats.recentContracts.map(c => (
+                  {recentContracts.map(c => (
                     <tr 
                       key={c.id} 
                       onClick={() => navigate(`/contracts/${c.id}`)}
@@ -161,7 +173,7 @@ export default function Dashboard() {
               Xem tất cả
             </button>
           </div>
-          {stats.recentJobs.length === 0 ? (
+          {recentJobs.length === 0 ? (
             <div className="empty-state">
               <p>Chưa có dự án nào.</p>
             </div>
@@ -176,7 +188,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {stats.recentJobs.map(j => (
+                  {recentJobs.map(j => (
                     <tr 
                       key={j.id} 
                       onClick={() => navigate('/jobs')}

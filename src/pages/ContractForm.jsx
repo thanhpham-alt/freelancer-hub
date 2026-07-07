@@ -5,7 +5,7 @@ import { getCompanyInfo } from '../data/companyInfo';
 import { generateContractNumber, numberToVietnameseWords } from '../utils/formatters';
 import { calculateItemsTotal, calculateTax, calculateNetAmount } from '../utils/calculations';
 import { useToast } from '../components/Toast';
-import { Modal } from '../components';
+import { AppIcon, Modal } from '../components';
 
 export default function ContractForm() {
   const navigate = useNavigate();
@@ -399,7 +399,7 @@ Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
         })));
       }
 
-      showToast('✅ AI đã điền thông tin hợp đồng! Hãy kiểm tra và chỉnh sửa nếu cần.', 'success');
+      showToast('AI đã điền thông tin hợp đồng! Hãy kiểm tra và chỉnh sửa nếu cần.', 'success');
       setIsAiModalOpen(false);
       setAiContractText('');
     } catch (err) {
@@ -423,13 +423,13 @@ Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
             onClick={() => setIsAiModalOpen(true)}
             title="Dán văn bản hợp đồng cũ, AI sẽ điền tự động"
           >
-            🤖 Điền bằng AI
+            <AppIcon name="bot" size={16} /> Điền bằng AI
           </button>
           <button className="btn btn-secondary btn-sm" onClick={() => handleSave('draft')}>
-            💾 Lưu bản nháp
+            <AppIcon name="save" size={16} /> Lưu bản nháp
           </button>
           <button className="btn btn-primary btn-sm" onClick={() => handleSave('signed')}>
-            ✍️ Lưu &amp; Ký kết
+            <AppIcon name="pen" size={16} /> Lưu &amp; Ký kết
           </button>
         </div>
       </div>
@@ -653,7 +653,7 @@ Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
         </table>
 
         <button type="button" className="btn btn-secondary btn-sm mt-1" onClick={addItemRow}>
-          ➕ Thêm hạng mục
+          <AppIcon name="plus" size={16} /> Thêm hạng mục
         </button>
 
         <div style={{ float: 'right', width: '320px', marginTop: '1.5rem' }}>
@@ -696,7 +696,7 @@ Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
         <div className="card-title">
           <span>3. Lịch thanh toán các đợt</span>
           <button type="button" className="btn btn-secondary btn-sm" onClick={addPhase}>
-            ➕ Thêm đợt thanh toán
+            <AppIcon name="plus" size={16} /> Thêm đợt thanh toán
           </button>
         </div>
 
@@ -753,10 +753,10 @@ Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
           Hủy bỏ
         </button>
         <button className="btn btn-secondary" onClick={() => handleSave('draft')}>
-          💾 Lưu bản nháp
+          <AppIcon name="save" size={16} /> Lưu bản nháp
         </button>
         <button className="btn btn-primary" onClick={() => handleSave('signed')}>
-          ✍️ Lưu &amp; Ký kết
+          <AppIcon name="pen" size={16} /> Lưu &amp; Ký kết
         </button>
       </div>
 
@@ -764,7 +764,7 @@ Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
       <Modal
         isOpen={isAiModalOpen}
         onClose={() => setIsAiModalOpen(false)}
-        title="🤖 Điền hợp đồng bằng AI"
+        title="Điền hợp đồng bằng AI"
         size="lg"
         footer={
           <>
@@ -775,7 +775,7 @@ Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
               {isAiLoading ? (
                 <><span className="loading-spinner" style={{ width: '14px', height: '14px' }}></span> Đang phân tích...</>
               ) : (
-                <>🤖 Phân tích và Điền vào Form</>
+                <><AppIcon name="wand" size={16} /> Phân tích và Điền vào Form</>
               )}
             </button>
           </>

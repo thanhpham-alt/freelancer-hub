@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { safeArray } from '../utils/dataGuards';
 
 export default function DataTable({ 
   columns, 
@@ -12,9 +13,10 @@ export default function DataTable({
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredData = useMemo(() => {
-    if (!searchTerm || !searchable) return data;
+    const rows = safeArray(data);
+    if (!searchTerm || !searchable) return rows;
     const term = searchTerm.toLowerCase();
-    return data.filter(item =>
+    return rows.filter(item =>
       columns.some(col => {
         // If there's a custom render, it's hard to search raw value, search stringified object as fallback
         if (col.render) return false;

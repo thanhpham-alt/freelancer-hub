@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getContracts, getFreelancers, getJobs, deleteContract } from '../data/store';
 import { formatCurrency, formatDate } from '../utils/formatters';
-import { StatusBadge, ConfirmDialog, useToast } from '../components';
+import { AppIcon, StatusBadge, ConfirmDialog, useToast } from '../components';
+import { safeArray } from '../utils/dataGuards';
 
 export default function Contracts() {
   const navigate = useNavigate();
@@ -20,9 +21,9 @@ export default function Contracts() {
       getFreelancers(),
       getJobs()
     ]);
-    setContracts(contracts);
-    setFreelancers(freelancers);
-    setJobs(jobs);
+    setContracts(safeArray(contracts));
+    setFreelancers(safeArray(freelancers));
+    setJobs(safeArray(jobs));
   };
 
   useEffect(() => {
@@ -39,7 +40,7 @@ export default function Contracts() {
     return j ? j.projectName : 'Dự án vãng lai';
   };
 
-  const filteredContracts = contracts.filter(c => {
+  const filteredContracts = safeArray(contracts).filter(c => {
     if (statusFilter === 'all') return true;
     return c.status === statusFilter;
   });
@@ -68,7 +69,7 @@ export default function Contracts() {
         <h1 className="page-title">Quản lý Hợp đồng CTV</h1>
         <div className="header-actions">
           <button className="btn btn-primary" onClick={() => navigate('/contracts/new')}>
-            <span>➕</span> Tạo Hợp Đồng Mới
+            <AppIcon name="plus" size={17} /> Tạo Hợp Đồng Mới
           </button>
         </div>
       </div>
@@ -97,7 +98,7 @@ export default function Contracts() {
       <div className="card">
         {filteredContracts.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">📄</div>
+            <div className="empty-icon"><AppIcon name="file" size={44} /></div>
             <p>Không tìm thấy hợp đồng nào.</p>
           </div>
         ) : (
@@ -137,14 +138,14 @@ export default function Contracts() {
                       <StatusBadge status={c.status} />
                     </td>
                     <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
-                      <button 
+                        <button 
                         className="btn btn-ghost btn-sm" 
                         style={{ color: 'var(--danger)', padding: '0.25rem 0.5rem' }} 
                         onClick={(e) => handleDeleteClick(e, c.id)}
                         title="Xóa hợp đồng"
-                      >
-                        🗑️
-                      </button>
+                        >
+                          <AppIcon name="trash" size={16} />
+                        </button>
                     </td>
                   </tr>
                 ))}

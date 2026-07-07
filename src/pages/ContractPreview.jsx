@@ -4,6 +4,7 @@ import { getContractById, getFreelancerById, getJobById, getPaymentSchedulesByCo
 import { getCompanyInfo } from '../data/companyInfo';
 import { formatCurrency, formatDate, formatDateLong, numberToVietnameseWords, extractDate } from '../utils/formatters';
 import { exportContractToGoogleDocs } from '../utils/googleDocsExport';
+import { AppIcon } from '../components';
 import '../print.css';
 
 export default function ContractPreview() {
@@ -55,7 +56,7 @@ export default function ContractPreview() {
 
   const handleGoogleDocsExport = async () => {
     setIsExporting(true);
-    setExportProgress('🔐 Đang xác thực Google...');
+    setExportProgress('Đang xác thực Google...');
     try {
       const { docUrl } = await exportContractToGoogleDocs({
         contract,
@@ -67,11 +68,11 @@ export default function ContractPreview() {
       // Save link back to contract
       await saveContract({ ...contract, googleDocUrl: docUrl });
       setGoogleDocUrl(docUrl);
-      setExportProgress('✅ Hoàn tất! Đang mở Google Docs...');
+      setExportProgress('Hoàn tất! Đang mở Google Docs...');
       setTimeout(() => { window.open(docUrl, '_blank'); setIsExporting(false); }, 1000);
     } catch (err) {
       console.error(err);
-      setExportProgress(`❌ Lỗi: ${err.message}`);
+      setExportProgress(`Lỗi: ${err.message}`);
       setTimeout(() => setIsExporting(false), 3000);
     }
   };
@@ -85,19 +86,19 @@ export default function ContractPreview() {
             ⬅ Quay lại danh sách
           </button>
           <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/contracts/${contract.id}/edit`)}>
-            ✏️ Chỉnh sửa
+            <AppIcon name="pencil" size={16} /> Chỉnh sửa
           </button>
           {googleDocUrl ? (
             <a href={googleDocUrl} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
-              📄 Mở Google Docs
+              <AppIcon name="external" size={16} /> Mở Google Docs
             </a>
           ) : (
             <button className="btn btn-secondary btn-sm" onClick={handleGoogleDocsExport} disabled={isExporting}>
-              {isExporting ? '⏳ Đang xuất...' : '📄 Xuất Google Docs'}
+              {isExporting ? <><AppIcon name="loader" size={16} className="spin-icon" /> Đang xuất...</> : <><AppIcon name="file" size={16} /> Xuất Google Docs</>}
             </button>
           )}
           <button className="btn btn-primary btn-sm" onClick={handlePrint}>
-            🖨️ In hợp đồng (PDF)
+            <AppIcon name="printer" size={16} /> In hợp đồng (PDF)
           </button>
         </div>
       </div>
@@ -405,14 +406,14 @@ export default function ContractPreview() {
             borderRadius: 'var(--radius-lg)', padding: '2.5rem 3rem',
             textAlign: 'center', boxShadow: 'var(--shadow-glow)', maxWidth: '400px'
           }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📄</div>
+            <div className="empty-icon"><AppIcon name="file" size={44} /></div>
             <div style={{ fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.5rem', fontWeight: 600 }}>
               Xuất Google Docs
             </div>
             <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
               {exportProgress}
             </div>
-            <div className="loading-spinner" style={{ width: '32px', height: '32px', margin: '1.25rem auto 0', display: exportProgress.startsWith('❌') || exportProgress.startsWith('✅') ? 'none' : 'block' }}></div>
+            <div className="loading-spinner" style={{ width: '32px', height: '32px', margin: '1.25rem auto 0', display: exportProgress.startsWith('Lỗi:') || exportProgress.startsWith('Hoàn tất') ? 'none' : 'block' }}></div>
           </div>
         </div>
       )}
