@@ -97,6 +97,31 @@
   font-size: 12pt;
 }
 
+.party-section {
+  margin-bottom: 0.5rem;
+}
+
+.party-label {
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 0.2rem;
+  font-size: 12pt;
+}
+
+.info-label {
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.info-value {
+  flex: 1;
+}
+
 .document-section-title {
   font-weight: bold;
   margin-top: 1.5rem;
