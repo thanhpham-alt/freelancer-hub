@@ -295,6 +295,7 @@ export default function ContractForm() {
       showToast(isEditing ? 'Cập nhật hợp đồng thành công!' : 'Tạo hợp đồng thành công!', 'success');
       navigate(`/contracts/${saved.id}`);
     } catch (err) {
+      console.error('Failed to save contract', err);
       showToast('Có lỗi xảy ra khi lưu hợp đồng.', 'error');
     }
   };

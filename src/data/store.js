@@ -23,7 +23,27 @@ const DEFAULT_DASHBOARD_STATS = {
 };
 
 function generateId() {
-  return crypto.randomUUID();
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function cleanFirestoreData(value) {
+  if (Array.isArray(value)) {
+    return value
+      .map(item => cleanFirestoreData(item))
+      .filter(item => item !== undefined);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, item]) => item !== undefined)
+        .map(([key, item]) => [key, cleanFirestoreData(item)])
+        .filter(([, item]) => item !== undefined)
+    );
+  }
+
+  return value;
 }
 
 async function getCollectionRows(collectionName) {
@@ -61,7 +81,8 @@ export async function saveFreelancer(freelancer) {
   if (!freelancer.id) freelancer.id = generateId();
   freelancer.updatedAt = new Date().toISOString();
   if (!freelancer.createdAt) freelancer.createdAt = new Date().toISOString();
-  await setDoc(doc(db, COLL.freelancers, freelancer.id), freelancer);
+  const cleanedFreelancer = cleanFirestoreData(freelancer);
+  await setDoc(doc(db, COLL.freelancers, cleanedFreelancer.id), cleanedFreelancer);
   return freelancer;
 }
 
@@ -84,7 +105,8 @@ export async function saveJob(job) {
   if (!job.id) job.id = generateId();
   job.updatedAt = new Date().toISOString();
   if (!job.createdAt) job.createdAt = new Date().toISOString();
-  await setDoc(doc(db, COLL.jobs, job.id), job);
+  const cleanedJob = cleanFirestoreData(job);
+  await setDoc(doc(db, COLL.jobs, cleanedJob.id), cleanedJob);
   return job;
 }
 
@@ -112,7 +134,8 @@ export async function saveContract(contract) {
   if (!contract.id) contract.id = generateId();
   contract.updatedAt = new Date().toISOString();
   if (!contract.createdAt) contract.createdAt = new Date().toISOString();
-  await setDoc(doc(db, COLL.contracts, contract.id), contract);
+  const cleanedContract = cleanFirestoreData(contract);
+  await setDoc(doc(db, COLL.contracts, cleanedContract.id), cleanedContract);
   return contract;
 }
 
@@ -140,7 +163,8 @@ export async function saveAcceptanceReport(report) {
   if (!report.id) report.id = generateId();
   report.updatedAt = new Date().toISOString();
   if (!report.createdAt) report.createdAt = new Date().toISOString();
-  await setDoc(doc(db, COLL.acceptanceReports, report.id), report);
+  const cleanedReport = cleanFirestoreData(report);
+  await setDoc(doc(db, COLL.acceptanceReports, cleanedReport.id), cleanedReport);
   return report;
 }
 
@@ -163,7 +187,8 @@ export async function savePaymentSchedule(schedule) {
   if (!schedule.id) schedule.id = generateId();
   schedule.updatedAt = new Date().toISOString();
   if (!schedule.createdAt) schedule.createdAt = new Date().toISOString();
-  await setDoc(doc(db, COLL.paymentSchedules, schedule.id), schedule);
+  const cleanedSchedule = cleanFirestoreData(schedule);
+  await setDoc(doc(db, COLL.paymentSchedules, cleanedSchedule.id), cleanedSchedule);
   return schedule;
 }
 

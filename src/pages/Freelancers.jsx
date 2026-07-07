@@ -290,6 +290,7 @@ export default function Freelancers() {
       setIsModalOpen(false);
       loadFreelancers();
     } catch (err) {
+      console.error('Failed to save freelancer', err);
       showToast('Có lỗi xảy ra khi lưu freelancer.', 'error');
     }
   };
