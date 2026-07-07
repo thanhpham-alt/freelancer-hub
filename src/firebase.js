@@ -15,7 +15,8 @@ let firestoreDb;
 
 try {
   firestoreDb = initializeFirestore(app, {
-    ignoreUndefinedProperties: true
+    ignoreUndefinedProperties: true,
+    experimentalAutoDetectLongPolling: true
   });
 } catch {
   firestoreDb = getFirestore(app);

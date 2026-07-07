@@ -1,5 +1,5 @@
 import { db } from '../firebase';
-import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, updateDoc, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, updateDoc, query, where, writeBatch } from 'firebase/firestore';
 
 // We will use standard async operations.
 const COLL = {
@@ -84,6 +84,26 @@ export async function saveFreelancer(freelancer) {
   const cleanedFreelancer = cleanFirestoreData(freelancer);
   await setDoc(doc(db, COLL.freelancers, cleanedFreelancer.id), cleanedFreelancer);
   return freelancer;
+}
+
+export async function saveFreelancers(freelancers) {
+  const now = new Date().toISOString();
+  const batch = writeBatch(db);
+
+  const savedFreelancers = freelancers.map(freelancer => {
+    const nextFreelancer = {
+      ...freelancer,
+      id: freelancer.id || generateId(),
+      updatedAt: now,
+      createdAt: freelancer.createdAt || now
+    };
+    const cleanedFreelancer = cleanFirestoreData(nextFreelancer);
+    batch.set(doc(db, COLL.freelancers, cleanedFreelancer.id), cleanedFreelancer);
+    return nextFreelancer;
+  });
+
+  await batch.commit();
+  return savedFreelancers;
 }
 
 export async function deleteFreelancer(id) {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getFreelancers, saveFreelancer, deleteFreelancer } from '../data/store';
+import { getFreelancers, saveFreelancer, saveFreelancers, deleteFreelancer } from '../data/store';
 import { formatDate } from '../utils/formatters';
 import { useToast } from '../components/Toast';
 import { AppIcon, Modal, ConfirmDialog } from '../components';
@@ -128,14 +128,12 @@ export default function Freelancers() {
     setIsImporting(true);
 
     try {
-      for (const freelancer of toImport) {
-        await Promise.race([
-          saveFreelancer(freelancer),
-          new Promise((_, reject) => {
-            setTimeout(() => reject(new Error(`Lưu ${freelancer.fullName} mất quá lâu. Vui lòng kiểm tra kết nối Firebase.`)), 15000);
-          })
-        ]);
-      }
+      await Promise.race([
+        saveFreelancers(toImport),
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Import mất quá lâu. Vui lòng kiểm tra kết nối Firebase hoặc thử lại sau vài giây.')), 45000);
+        })
+      ]);
       
       showToast(`Đã import thành công ${toImport.length} freelancer!`, 'success');
       setIsImportModalOpen(false);
