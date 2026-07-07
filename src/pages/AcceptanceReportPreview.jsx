@@ -19,21 +19,24 @@ export default function AcceptanceReportPreview() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState('');
 
-  useEffect(() => { const fetchData = async () => {
-    const r = await getAcceptanceReportById(id);
-    if (r) {
-      setReport(r);
-      const c = await getContractById(r.contractId);
-      if (c) {
-        setContract(c);
-        setFreelancer(await getFreelancerById(c.freelancerId));
-        if (c.jobId) {
-          setJob(await getJobById(c.jobId));
+  useEffect(() => {
+    const fetchData = async () => {
+      const r = await getAcceptanceReportById(id);
+      if (r) {
+        setReport(r);
+        const c = await getContractById(r.contractId);
+        if (c) {
+          setContract(c);
+          setFreelancer(await getFreelancerById(c.freelancerId));
+          if (c.jobId) {
+            setJob(await getJobById(c.jobId));
+          }
         }
+        if (r.googleDocUrl) setGoogleDocUrl(r.googleDocUrl);
       }
-      if (r.googleDocUrl) setGoogleDocUrl(r.googleDocUrl);
-    }
-    setCompany(getCompanyInfo());
+      setCompany(getCompanyInfo());
+    };
+    fetchData();
   }, [id]);
 
   if (!report || !contract || !freelancer) {

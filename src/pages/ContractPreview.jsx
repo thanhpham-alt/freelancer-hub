@@ -23,15 +23,19 @@ export default function ContractPreview() {
   const [googleDocUrl, setGoogleDocUrl] = useState('');
 
   useEffect(() => {
-    const c = await getContractById(id);
-    if (c) {
-      setContract(c);
-      setFreelancer(await getFreelancerById(c.freelancerId));
-      if (c.jobId) setJob(await getJobById(c.jobId));
-      setPayments(await getPaymentSchedulesByContract(c.id).sort((a, b) => a.phase - b.phase));
-      if (c.googleDocUrl) setGoogleDocUrl(c.googleDocUrl);
-    }
-    setCompany(getCompanyInfo());
+    const fetchData = async () => {
+      const c = await getContractById(id);
+      if (c) {
+        setContract(c);
+        setFreelancer(await getFreelancerById(c.freelancerId));
+        if (c.jobId) setJob(await getJobById(c.jobId));
+        const schedules = await getPaymentSchedulesByContract(c.id);
+        setPayments(schedules.sort((a, b) => a.phase - b.phase));
+        if (c.googleDocUrl) setGoogleDocUrl(c.googleDocUrl);
+      }
+      setCompany(getCompanyInfo());
+    };
+    fetchData();
   }, [id]);
 
   if (!contract || !freelancer) {

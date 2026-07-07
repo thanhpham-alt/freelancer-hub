@@ -37,10 +37,13 @@ export default function AcceptanceReportForm() {
   const [originalContractItems, setOriginalContractItems] = useState([]);
 
   const loadData = async () => {
-    const cts = getContracts().filter(c => c.status === 'signed');
-    const fls = getFreelancers();
-    const jbs = getJobs();
-    
+    const [allContracts, fls, jbs] = await Promise.all([
+      getContracts(),
+      getFreelancers(),
+      getJobs()
+    ]);
+    const cts = allContracts.filter(c => c.status === 'signed');
+
     setContracts(cts);
     setFreelancers(fls);
     setJobs(jbs);
@@ -55,7 +58,7 @@ export default function AcceptanceReportForm() {
       const report = await getAcceptanceReportById(id);
       if (report) {
         setFormData(report);
-        const originalContract = getContracts().find(c => c.id === report.contractId);
+        const originalContract = allContracts.find(c => c.id === report.contractId);
         if (originalContract) {
           setOriginalContractItems(originalContract.items || []);
         }
@@ -64,7 +67,6 @@ export default function AcceptanceReportForm() {
         navigate('/acceptance-reports');
       }
     } else {
-      // Pre-select first contract
       const firstContract = cts[0];
       if (firstContract) {
         handleContractSelection(firstContract.id, cts);
@@ -207,15 +209,9 @@ export default function AcceptanceReportForm() {
               required
               disabled={isEditing}
             >
-              {isEditing ? (
-                contracts.concat(getContracts()).filter((c, i, self) => self.findIndex(t => t.id === c.id) === i).map(c => (
-                  <option key={c.id} value={c.id}>{c.contractNumber} - {getFreelancers().find(f => f.id === c.freelancerId)?.fullName}</option>
-                ))
-              ) : (
-                contracts.map(c => (
-                  <option key={c.id} value={c.id}>{c.contractNumber} - {getFreelancers().find(f => f.id === c.freelancerId)?.fullName}</option>
-                ))
-              )}
+              {contracts.map(c => (
+                <option key={c.id} value={c.id}>{c.contractNumber} - {freelancers.find(f => f.id === c.freelancerId)?.fullName}</option>
+              ))}
             </select>
           </div>
           <div className="form-group">

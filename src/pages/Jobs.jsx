@@ -23,8 +23,9 @@ export default function Jobs() {
   });
 
   const loadData = async () => {
-    getJobs().then(setJobs);
-    getFreelancers().then(setFreelancers);
+    const [jobs, freelancers] = await Promise.all([getJobs(), getFreelancers()]);
+    setJobs(jobs);
+    setFreelancers(freelancers);
   };
 
   useEffect(() => {

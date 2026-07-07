@@ -15,9 +15,14 @@ export default function Contracts() {
   const [selectedContractId, setSelectedContractId] = useState(null);
 
   const loadData = async () => {
-    getContracts().then(setContracts);
-    getFreelancers().then(setFreelancers);
-    getJobs().then(setJobs);
+    const [contracts, freelancers, jobs] = await Promise.all([
+      getContracts(),
+      getFreelancers(),
+      getJobs()
+    ]);
+    setContracts(contracts);
+    setFreelancers(freelancers);
+    setJobs(jobs);
   };
 
   useEffect(() => {

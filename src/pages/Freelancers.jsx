@@ -86,9 +86,7 @@ export default function Freelancers() {
 
   const handleBulkDelete = async () => {
     try {
-      selectedIds.forEach(id => {
-        await deleteFreelancer(id);
-      });
+      await Promise.all(selectedIds.map(id => deleteFreelancer(id)));
       showToast(`Đã xóa thành công ${selectedIds.length} freelancer!`, 'success');
       setSelectedIds([]);
       setIsBulkConfirmOpen(false);
@@ -116,13 +114,9 @@ export default function Freelancers() {
       return;
     }
     
-    let count = 0;
-    toImport.forEach(f => {
-      await saveFreelancer(f);
-      count++;
-    });
+    await Promise.all(toImport.map(f => saveFreelancer(f)));
     
-    showToast(`Đã import thành công ${count} freelancer!`, 'success');
+    showToast(`Đã import thành công ${toImport.length} freelancer!`, 'success');
     setIsImportModalOpen(false);
     loadFreelancers();
   };

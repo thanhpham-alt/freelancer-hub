@@ -148,7 +148,7 @@ export default function Payments() {
                         {p.status !== 'paid' ? (
                           <button 
                             className="btn btn-primary btn-sm" 
-                            onClick={() => {
+                            onClick={async () => {
                               try {
                                 await updatePaymentStatus(p.id, 'paid', new Date().toISOString().split('T')[0]);
                                 showToast('Đã đánh dấu thanh toán', 'success');
@@ -164,7 +164,7 @@ export default function Payments() {
                           <button 
                             className="btn btn-secondary btn-sm" 
                             style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}
-                            onClick={() => {
+                            onClick={async () => {
                               try {
                                 await updatePaymentStatus(p.id, 'pending', '');
                                 showToast('Đã hủy thanh toán', 'success');

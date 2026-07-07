@@ -15,10 +15,16 @@ export default function AcceptanceReports() {
   const [selectedReportId, setSelectedReportId] = useState(null);
 
   const loadData = async () => {
-    setReports(getAcceptanceReports());
-    getContracts().then(setContracts);
-    getFreelancers().then(setFreelancers);
-    getJobs().then(setJobs);
+    const [reports, contracts, freelancers, jobs] = await Promise.all([
+      getAcceptanceReports(),
+      getContracts(),
+      getFreelancers(),
+      getJobs()
+    ]);
+    setReports(reports);
+    setContracts(contracts);
+    setFreelancers(freelancers);
+    setJobs(jobs);
   };
 
   useEffect(() => {

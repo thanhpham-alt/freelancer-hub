@@ -52,8 +52,8 @@ export default function ContractForm() {
   ]);
 
   useEffect(() => {
-    const fls = getFreelancers();
-    const jbs = getJobs();
+    const fetchData = async () => {
+    const [fls, jbs] = await Promise.all([getFreelancers(), getJobs()]);
     const comp = getCompanyInfo();
     const tax = Number(localStorage.getItem('fh_default_tax_rate') || 10);
     
@@ -98,6 +98,8 @@ export default function ContractForm() {
         contractNumber: generateContractNumber(firstFreelancer.fullName, prev.signDate, comp.shortName)
       }));
     }
+    };
+    fetchData();
   }, [id, isEditing]);
 
   // Recalculate totals when items or tax rate change
@@ -275,23 +277,20 @@ export default function ContractForm() {
 
       // Save payment phases
       if (isEditing) {
-        // Remove old phases of this contract first
         const oldPhases = await getPaymentSchedulesByContract(id);
-        oldPhases.forEach(op => await deletePaymentSchedule(op.id));
+        await Promise.all(oldPhases.map(op => deletePaymentSchedule(op.id)));
       }
 
-      paymentPhases.forEach(p => {
-        await savePaymentSchedule({
-          contractId: saved.id,
-          phase: p.phase,
-          percentage: Number(p.percentage),
-          amount: p.amount,
-          description: p.description,
-          dueDate: p.dueDate || finalContract.endDate,
-          status: 'pending',
-          paidDate: null
-        });
-      });
+      await Promise.all(paymentPhases.map(p => savePaymentSchedule({
+        contractId: saved.id,
+        phase: p.phase,
+        percentage: Number(p.percentage),
+        amount: p.amount,
+        description: p.description,
+        dueDate: p.dueDate || finalContract.endDate,
+        status: 'pending',
+        paidDate: null
+      })));
 
       showToast(isEditing ? 'Cập nhật hợp đồng thành công!' : 'Tạo hợp đồng thành công!', 'success');
       navigate(`/contracts/${saved.id}`);
