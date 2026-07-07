@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getContracts, getFreelancers, getJobs, getAcceptanceReportById, saveAcceptanceReport, getPaymentSchedulesByContract } from '../data/store';
 import { calculateItemsTotal, calculateTax, calculateNetAmount } from '../utils/calculations';
+import { formatCurrency, parseCurrencyInput } from '../utils/formatters';
 import { useToast } from '../components/Toast';
 import { AppIcon } from '../components';
 
@@ -108,7 +109,9 @@ export default function AcceptanceReportForm() {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: ['contractValue', 'additionalValue', 'paidAmount', 'remainingAmount'].includes(name)
+        ? parseCurrencyInput(value)
+        : value
     }));
   };
 
@@ -299,11 +302,11 @@ export default function AcceptanceReportForm() {
                 </td>
                 <td>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     className="form-input"
-                    value={item.unitPrice}
-                    onChange={(e) => handleItemChange(idx, 'unitPrice', Number(e.target.value))}
-                    min="0"
+                    value={formatCurrency(item.unitPrice)}
+                    onChange={(e) => handleItemChange(idx, 'unitPrice', parseCurrencyInput(e.target.value))}
                     required
                     disabled={item.isOriginal}
                   />
@@ -333,10 +336,10 @@ export default function AcceptanceReportForm() {
           <div className="form-group">
             <label className="form-label">Giá trị hợp đồng thực nhận (đã khấu trừ thuế)</label>
             <input
-              type="number"
+              type="text"
               name="contractValue"
               className="form-input"
-              value={formData.contractValue}
+              value={formatCurrency(formData.contractValue)}
               onChange={handleInputChange}
               disabled
             />
@@ -344,10 +347,10 @@ export default function AcceptanceReportForm() {
           <div className="form-group">
             <label className="form-label">Giá trị phát sinh thực nhận (đã khấu trừ thuế)</label>
             <input
-              type="number"
+              type="text"
               name="additionalValue"
               className="form-input"
-              value={formData.additionalValue}
+              value={formatCurrency(formData.additionalValue)}
               disabled
             />
           </div>
@@ -357,21 +360,22 @@ export default function AcceptanceReportForm() {
           <div className="form-group">
             <label className="form-label">Giá trị đã thanh toán tạm ứng (VNĐ)</label>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               name="paidAmount"
               className="form-input"
-              value={formData.paidAmount}
+              value={formatCurrency(formData.paidAmount)}
               onChange={handleInputChange}
-              placeholder="VD: 10000000"
+              placeholder="VD: 10.000.000"
             />
           </div>
           <div className="form-group">
             <label className="form-label">Còn lại cần thanh toán thanh lý (VNĐ)</label>
             <input
-              type="number"
+              type="text"
               name="remainingAmount"
               className="form-input"
-              value={formData.remainingAmount}
+              value={formatCurrency(formData.remainingAmount)}
               disabled
               style={{ color: 'var(--success)', fontWeight: 'bold' }}
             />

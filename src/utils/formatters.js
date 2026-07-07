@@ -4,6 +4,13 @@ export function formatCurrency(amount) {
   return Number(amount).toLocaleString('vi-VN');
 }
 
+export function parseCurrencyInput(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const cleanValue = String(value || '').replace(/[^\d-]/g, '');
+  const parsed = Number(cleanValue);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 // Format date: '2026-04-20' -> '20/04/2026'
 export function formatDate(dateStr) {
   if (!dateStr) return '';
@@ -35,7 +42,7 @@ export function numberToVietnameseWords(num) {
   num = Math.round(Number(num));
   
   const ones = ['', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
-  const positions = ['', 'nghìn', 'triệu', 'tỷ'];
+  const positions = ['', 'nghìn', 'triệu', 'tỷ', 'nghìn tỷ', 'triệu tỷ'];
   
   function readThreeDigits(n, showZeroHundred) {
     const hundred = Math.floor(n / 100);
@@ -82,31 +89,26 @@ export function numberToVietnameseWords(num) {
     return 'Âm ' + numberToVietnameseWords(-num);
   }
   
-  let result = '';
-  let groups = [];
+  const groups = [];
   let temp = num;
   
   while (temp > 0) {
     groups.push(temp % 1000);
     temp = Math.floor(temp / 1000);
   }
+
+  const parts = [];
   
   for (let i = groups.length - 1; i >= 0; i--) {
-    if (groups[i] === 0) {
-      // Nếu nhóm tỉ (i = 3) hoặc nhóm triệu (i = 2) nhưng có giá trị cao hơn
-      if (i % 3 === 0 && groups.slice(i).some(x => x > 0)) {
-        result += 'tỷ ';
-      }
-      continue;
-    }
-    const showZero = i < groups.length - 1;
+    if (groups[i] === 0) continue;
+    const showZero = i < groups.length - 1 && groups[i] < 100;
     const text = readThreeDigits(groups[i], showZero);
     if (text) {
-      result += text + ' ' + positions[i] + ' ';
+      parts.push(`${text} ${positions[i]}`.trim());
     }
   }
   
-  result = result.trim();
+  let result = parts.join(' ');
   
   // Xử lý các khoảng trắng thừa
   result = result.replace(/\s+/g, ' ');

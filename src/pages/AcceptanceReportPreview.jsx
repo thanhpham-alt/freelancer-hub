@@ -210,9 +210,9 @@ export default function AcceptanceReportPreview() {
               </thead>
               <tbody>
                 {report.items.map((item, idx) => (
-                  <tr key={idx} style={!item.isOriginal ? { fontStyle: 'italic' } : {}}>
+                  <tr key={idx}>
                     <td className="num-col">{idx + 1}</td>
-                    <td>{item.name} {!item.isOriginal && '(Phát sinh ngoài HĐ)'}</td>
+                    <td>{item.name}</td>
                     <td className="unit-col">{item.unit}</td>
                     <td className="qty-col">{item.quantity}</td>
                     <td className="price-col">{formatCurrency(item.unitPrice)}</td>

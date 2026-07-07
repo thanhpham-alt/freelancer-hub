@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getFreelancers, getJobs, getContractById, saveContract, savePaymentSchedule, getPaymentSchedulesByContract, deletePaymentSchedule } from '../data/store';
 import { getCompanyInfo } from '../data/companyInfo';
-import { generateContractNumber, numberToVietnameseWords } from '../utils/formatters';
+import { formatCurrency, generateContractNumber, numberToVietnameseWords, parseCurrencyInput } from '../utils/formatters';
 import { calculateItemsTotal, calculateTax, calculateNetAmount } from '../utils/calculations';
 import { parseContractWithAI } from '../utils/aiParser';
 import { normalizeContractImport } from '../utils/importNormalizer';
@@ -598,11 +598,11 @@ export default function ContractForm() {
                 </td>
                 <td>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     className="form-input"
-                    value={item.unitPrice}
-                    onChange={(e) => handleItemChange(idx, 'unitPrice', Number(e.target.value))}
-                    min="0"
+                    value={formatCurrency(item.unitPrice)}
+                    onChange={(e) => handleItemChange(idx, 'unitPrice', parseCurrencyInput(e.target.value))}
                     required
                   />
                 </td>
